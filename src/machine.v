@@ -5,32 +5,50 @@ module machine (
   input         en,
   input [23:0]  div,
   input [31:0]  din,
+  input [15:0]  instr,
+  input [31:0]  input_pins,
+
+  // Configuration
   input [4:0]   pstart,
   input [4:0]   pend,
-  input [15:0]  instr,
   input         jmp_pin,
   input [2:0]   sideset_bits,
+  input [4:0]   pins_out_base,
+  input [2:0]   pins_out_count,
+  input [4:0]   pins_set_base,
+  input [2:0]   pins_set_count,
+  input [4:0]   pins_in_base,
+  input [2:0]   pins_in_count,
+  input [4:0]   pins_side_base,
+  input [2:0]   pins_side_count,
+  input         shift_dir,
 
+  // Output
   output [4:0]  pc,
-  output reg    push,
-  output reg    pull,
-  output [31:0] dout
+  output reg    push, // Send data to output FIFO
+  output reg    pull, // Get data from input FIFO
+  output [31:0] dout,
+  output reg [31:0] output_pins,
+  output reg [31:0] pin_directions
 );
- 
+
+  // Strobes to implement instructions 
   reg         jmp;
   reg         setx;
   reg         sety;
   reg         decx;
   reg         decy;
-  reg         wrap;
-  reg [4:0]   index;
-  reg         shift_dir;
   reg         set_shift;
+
   reg         waiting;
   reg [31:0]  new_val;
-  
+  reg [4:0]   delay1;
+  reg [3:0]   sideset_count;
+ 
+  // Divided clock 
   wire        pclk;
-  wire [4:0]  curr_pc;
+
+  // Output from modules
   wire [31:0] x;
   wire [31:0] y;
   wire [31:0] in_shift;
@@ -39,8 +57,6 @@ module machine (
   wire [4:0]  op1;
   wire [4:0]  op2;
   wire [4:0]  delay;
-  reg [4:0]   delay1;
-  reg [3:0]   sideset_count;
 
   // Instructions
   localparam JMP  = 0;
@@ -55,14 +71,14 @@ module machine (
 
   // Execute the current instruction
   always @(posedge pclk) begin
-    if (en) begin
+    if (reset) begin
+    end else if (en) begin
       jmp <= 0;
       pull <= 0;
       push <= 0;
       set_shift <= 0;
       decx <= 0;
       decy <= 0;
-      waiting <= 0;
       setx <= 0;
       sety <= 0;
       case (op)
@@ -83,6 +99,24 @@ module machine (
         IN:   case (op1)
                 1: begin new_val <= in_shift; setx <= 1; end
               endcase
+        SET:  case (op1)
+                0: begin
+                     if (pins_out_count > 4) output_pins[pins_out_base+4] <= op2[4];
+                     if (pins_out_count > 3) output_pins[pins_out_base+3] <= op2[3];
+                     if (pins_out_count > 2) output_pins[pins_out_base+2] <= op2[2];
+                     if (pins_out_count > 1) output_pins[pins_out_base+1] <= op2[1];
+                     if (pins_out_count > 0) output_pins[pins_out_base+0] <= op2[0];
+                   end
+                1: begin setx <= 1; new_val <= {27'b0, op2}; end
+                2: begin sety <= 1; new_val <= {27'b0, op2}; end
+                4: begin
+                     if (pins_out_count > 4) pin_directions[pins_out_base+4] <= op2[4];
+                     if (pins_out_count > 3) pin_directions[pins_out_base+3] <= op2[3];
+                     if (pins_out_count > 2) pin_directions[pins_out_base+2] <= op2[2];
+                     if (pins_out_count > 1) pin_directions[pins_out_base+1] <= op2[1];
+                     if (pins_out_count > 0) pin_directions[pins_out_base+0] <= op2[0];
+                   end
+              endcase
       endcase
     end
   end
@@ -97,10 +131,11 @@ module machine (
   pc pc_inst (
     .pclk(pclk),
     .reset(reset),
-    .din(wrap ? index : op2),
+    .din(op2),
     .jmp(jmp),
-    .wrap(wrap),
-    .dout(curr_pc)
+    .stalled(waiting),
+    .pend(pend),
+    .dout(pc)
   );
 
   scratch scratch_x (
