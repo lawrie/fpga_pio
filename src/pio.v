@@ -31,13 +31,12 @@ module pio (
   reg [2:0]   pins_out_count [0:3];
   reg [4:0]   pins_set_base [0:3];
   reg [2:0]   pins_set_count [0:3];
+  reg [2:0]   sideset_bits [0:3];
   wire [31:0] output_pins [0:3];
   wire [31:0] pin_directions [0:3];
-  reg [2:0]   sideset_bits [0:3];
-
-  wire [4:0]  pc1, pc2, pc3, pc4;
-  wire [31:0] din1, din2, din3, din4;
-  wire [31:0] dout1, dout2, dout3, dout4;
+  wire [4:0]  pc [0:3];
+  wire [31:0] mdin [0:3];
+  wire [31:0] mdout [0:3];
 
   assign gpio_out = output_pins[0]; // TODO: Combine outputs from machines
   assign gpio_dir = pin_directions[0];
@@ -83,102 +82,36 @@ module pio (
     end
   end
 
-  machine machine_1 (
-    .clk(clk),
-    .reset(reset),
-    .en(en[0]),
-    .mindex(2'b0),
-    .jmp_pin(jmp_pin[0]),
-    .gpio_pins(gpio_in),
-    .input_pins(gpio_in),
-    .output_pins(output_pins[0]),
-    .pin_directions(pin_directions[0]),
-    .sideset_bits(sideset_bits[0]),
-    .div(div[0]),
-    .instr(imm ? din[15:0] : instr[pc1]),
-    .imm(imm),
-    .pstart(pstart[0]),
-    .pend(pend[0]),
-    .pins_out_base(pins_out_base[0]),
-    .pins_out_count(pins_out_count[0]),
-    .pins_set_base(pins_set_base[0]),
-    .pins_set_count(pins_set_count[0]),
-    .pc(pc1),
-    .din(din1),
-    .dout(dout1)
-  );
+  generate
+    genvar j;
 
-  machine machine_2 (
-    .clk(clk),
-    .reset(reset),
-    .en(en[1]),
-    .mindex(2'b1),
-    .jmp_pin(jmp_pin[1]),
-    .gpio_pins(gpio_in),
-    .input_pins(gpio_in),
-    .output_pins(output_pins[1]),
-    .pin_directions(pin_directions[1]),
-    .sideset_bits(sideset_bits[1]),
-    .div(div[1]),
-    .instr(instr[pc2]),
-    .pstart(pstart[1]),
-    .pend(pend[1]),
-    .pins_out_base(pins_out_base[1]),
-    .pins_out_count(pins_out_count[1]),
-    .pins_set_base(pins_set_base[1]),
-    .pins_set_count(pins_set_count[1]),
-    .pc(pc2),
-    .din(din2),
-    .dout(dout2)
-  );
-
-  machine machine_3 (
-    .clk(clk),
-    .reset(reset),
-    .mindex(2'b10),
-    .en(en[2]),
-    .jmp_pin(jmp_pin[2]),
-    .gpio_pins(gpio_in),
-    .input_pins(gpio_in),
-    .output_pins(output_pins[2]),
-    .pin_directions(pin_directions[2]),
-    .sideset_bits(sideset_bits[2]),
-    .div(div[2]),
-    .instr(instr[pc3]),
-    .pstart(pstart[2]),
-    .pend(pend[2]),
-    .pins_out_base(pins_out_base[2]),
-    .pins_out_count(pins_out_count[2]),
-    .pins_set_base(pins_set_base[2]),
-    .pins_set_count(pins_set_count[2]),
-    .pc(pc3),
-    .din(din3),
-    .dout(dout3)
-  );
-
-  machine machine_4 (
-    .clk(clk),
-    .reset(reset),
-    .en(en[3]),
-    .mindex(2'b11),
-    .jmp_pin(jmp_pin[3]),
-    .gpio_pins(gpio_in),
-    .input_pins(gpio_in),
-    .output_pins(output_pins[3]),
-    .pin_directions(pin_directions[3]),
-    .sideset_bits(sideset_bits[3]),
-    .div(div[3]),
-    .instr(instr[pc4]),
-    .pstart(pstart[3]),
-    .pend(pend[3]),
-    .pins_out_base(pins_out_base[3]),
-    .pins_out_count(pins_out_count[3]),
-    .pins_set_base(pins_set_base[3]),
-    .pins_set_count(pins_set_count[3]),
-    .pc(pc4),
-    .din(din4),
-    .dout(dout4)
-  );
+    for(j=0;j<4;j=j+1) begin : mach
+      machine machine (
+        .clk(clk),
+        .reset(reset),
+        .en(en[j]),
+        .mindex(j[1:0]),
+        .jmp_pin(jmp_pin[j]),
+        .gpio_pins(gpio_in),
+        .input_pins(gpio_in),
+        .output_pins(output_pins[j]),
+        .pin_directions(pin_directions[j]),
+        .sideset_bits(sideset_bits[j]),
+        .div(div[j]),
+        .instr(imm ? din[15:0] : instr[pc[j]]),
+        .imm(imm),
+        .pstart(pstart[j]),
+        .pend(pend[0]),
+        .pins_out_base(pins_out_base[j]),
+        .pins_out_count(pins_out_count[j]),
+        .pins_set_base(pins_set_base[j]),
+        .pins_set_count(pins_set_count[j]),
+        .pc(pc[j]),
+        .din(mdin[j]),
+        .dout(mdout[j])
+      );
+    end
+  endgenerate
 
   fifo fifo_tx_1 (
     .clk(clk),
@@ -186,7 +119,7 @@ module pio (
     .push(push),
     .pull(pull),
     .din(din),
-    .dout(din1)
+    .dout(mdin[0])
   );
 
   fifo fifo_rx_1 (
@@ -204,7 +137,7 @@ module pio (
     .push(push),
     .pull(pull),
     .din(din),
-    .dout(din2)
+    .dout(mdin[1])
   );
 
   fifo fifo_rx_2 (
@@ -213,7 +146,7 @@ module pio (
     .push(push),
     .pull(pull),
     .din(din),
-    .dout(din3)
+    .dout(mdin[2])
   );
 
   fifo fifo_tx_3 (
@@ -240,7 +173,7 @@ module pio (
     .push(push),
     .pull(pull),
     .din(din),
-    .dout(din3)
+    .dout(mdin[2])
   );
 
   fifo fifo_rx_4 (
