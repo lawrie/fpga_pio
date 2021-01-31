@@ -26,7 +26,7 @@ module tb();
   // Configuration
   reg [15:0] program [0:31];
   initial begin
-    program[0] = 16'b100_01111_100_00001; // pull side 1 [7]
+    program[0] = 16'b100_01111_101_00001; // pull side 1 [7]
     program[1] = 16'b111_01110_001_00111; // set x 7, side 0 [7]
     program[2] = 16'b011_00000_000_00001; // out pins 1
     program[3] = 16'b000_01100_010_00011; // jmp x-- 3 [6]

@@ -181,8 +181,7 @@ module machine (
                   5: begin end // PC
                 endcase
           PUSH: if (!op1[2]) begin end                                               // Push
-                //else begin pull <= 1; set_shift <= 1; waiting <= op[0] && empty; end // Pull
-                else begin pull = 1; set_shift = 1; waiting = empty; end // Pull
+                else begin pull <= 1; set_shift <= 1; waiting <= op[0] && empty; end // Pull
           MOV:  case (op1)
                   0: begin end // Pins
                   1: case (op2[2:0]) // X
