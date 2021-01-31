@@ -10,6 +10,8 @@ module machine (
   input [31:0]  gpio_pins,
   input [31:0]  irq_flags,
   input         imm,
+  input         empty,
+  input         full,
 
   // Configuration
   input [1:0]   mindex,
@@ -67,6 +69,28 @@ module machine (
 
   reg [4:0] delay_cnt = 0;
 
+  function [31:0] reverse (
+    input [31:0] in
+  );
+
+    integer i;
+    for(i=0;i<32;i=i+1) begin
+      reverse[i] = in[31-i];
+    end
+  endfunction
+
+  function [31:0] bit_op (
+    input [31:0] in,
+    input [1:0] op
+  );
+
+    case (op) 
+      0: bit_op = in;
+      1: bit_op = ~in;
+      2: bit_op = reverse(in);
+    endcase
+  endfunction
+
   // Instructions
   localparam JMP  = 0;
   localparam WAIT = 1;
@@ -110,10 +134,21 @@ module machine (
                   1: waiting <= input_pins[op2] != op1[2];
                   2: waiting <= irq_flags[op2] != op1[2];
                 endcase
-          PULL: if (op1[2]) begin pull <= 1; set_shift <= 1; end
           IN:   case (op1)
                   1: begin new_val <= in_shift; setx <= 1; end
                 endcase
+          OUT:  begin end
+          PUSH: if (!op1[0]) begin end                                               // Push
+                else begin pull <= 1; set_shift <= 1; waiting <= op[0] && empty; end // Pull
+          MOV:  case (op1)
+                  1: case (op2[2:0])
+                       2: begin new_val <= bit_op(y, op2[4:3]); setx <= 1; end
+                     endcase
+                  2: case (op2[2:0])
+                       1: begin new_val <= bit_op(x, op2[4:3]); sety <= 1; end
+                     endcase
+                endcase
+          IRQ:  begin end
           SET:  case (op1)
                   0: begin
                        if (pins_set_count > 4) output_pins[pins_set_base+4] <= op2[4];
