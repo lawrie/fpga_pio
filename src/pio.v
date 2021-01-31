@@ -6,7 +6,7 @@ module pio (
   input [31:0]  din,
   input [4:0]   index,
   input [3:0]   action,
-  output [31:0] dout,
+  output reg [31:0] dout,
   input [31:0]  gpio_in,
   output [31:0] gpio_out,
   output [31:0] gpio_dir,
@@ -48,6 +48,7 @@ module pio (
   wire [4:0]  pc [0:3];
   wire [31:0] mdin [0:3];
   wire [31:0] mdout [0:3];
+  wire [31:0] pdout [0:3];
 
   assign gpio_out = output_pins[0]; // TODO: Combine outputs from machines
   assign gpio_dir = pin_directions[0];
@@ -83,7 +84,10 @@ module pio (
        2: begin                             // Configure pend
             pend[mindex] <= index; 
           end 
-       3: pull[mindex] <= 1;                // Pull a value from fifo
+       3: begin                             // Pull vsalue from fifo 
+            pull[mindex] <= 1; 
+            dout <= pdout[mindex]; 
+          end
        4: push[mindex] <= 1;                // Push a value to fifo
        5: begin                             // Configure pin groups
             pins_set_count[mindex]  <= din[2:0];
@@ -140,88 +144,28 @@ module pio (
         .empty(empty[j]),
         .full(full[j])
       );
+
+      fifo fifo_tx (
+        .clk(clk),
+        .reset(reset),
+        .push(push[j]),
+        .pull(mpull[j]),
+        .din(din),
+        .dout(mdin[j]),
+        .empty(empty[j])
+      );
+
+      fifo fifo_rx (
+        .clk(clk),
+        .reset(reset),
+        .push(mpush[j]),
+        .pull(pull[j]),
+        .din(mdout[j]),
+        .dout(pdout[j]),
+        .full(full[j])
+      );
     end
   endgenerate
-
-  fifo fifo_tx_1 (
-    .clk(clk),
-    .reset(reset),
-    .push(push[0]),
-    .pull(mpull[0]),
-    .din(din),
-    .dout(mdin[0]),
-    .empty(empty[0])
-  );
-
-  fifo fifo_rx_1 (
-    .clk(clk),
-    .reset(reset),
-    .push(mpush[0]),
-    .pull(pull[0]),
-    .din(din),
-    .dout(dout),
-    .full(full[0])
-  );
-
-  fifo fifo_tx_2 (
-    .clk(clk),
-    .reset(reset),
-    .push(push[1]),
-    .pull(mpull[1]),
-    .din(din),
-    .dout(mdin[1]),
-    .empty(empty[1])
-  );
-
-  fifo fifo_rx_2 (
-    .clk(clk),
-    .reset(reset),
-    .push(mpush[1]),
-    .pull(pull[1]),
-    .din(din),
-    .dout(dout),
-    .full(full[1])
-  );
-
-  fifo fifo_tx_3 (
-    .clk(clk),
-    .reset(reset),
-    .push(push[2]),
-    .pull(mpull[2]),
-    .din(din),
-    .dout(mdin[2]),
-    .empty(empty[2])
-  );
-
-  fifo fifo_rx_3 (
-    .clk(clk),
-    .reset(reset),
-    .push(mpush[2]),
-    .pull(pull[2]),
-    .din(din),
-    .dout(dout),
-    .full(full[2])
-  );
-
-  fifo fifo_tx_4 (
-    .clk(clk),
-    .reset(reset),
-    .push(push[3]),
-    .pull(mpull[3]),
-    .din(din),
-    .dout(mdin[3]),
-    .empty(empty[3])
-  );
-
-  fifo fifo_rx_4 (
-    .clk(clk),
-    .reset(reset),
-    .push(mpush[3]),
-    .pull(pull[3]),
-    .din(din),
-    .dout(dout),
-    .full(full[3])
-  );
 
 endmodule
 
