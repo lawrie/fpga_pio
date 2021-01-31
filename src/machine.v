@@ -52,8 +52,8 @@ module machine (
   reg [31:0]  new_val;
   reg [3:0]   sideset_count;
  
-  // Divided clock 
-  wire        pclk;
+  // Divided clock enable signal 
+  wire        penable;
 
   // Output from modules
   wire [31:0] x;
@@ -79,10 +79,10 @@ module machine (
   localparam SET  = 7;
 
   // Execute the current instruction
-  always @(posedge pclk) begin
-    if (reset) begin // TODO: reset doesn't work with pclk
+  always @(posedge clk) begin
+    if (reset) begin
       delay_cnt <= 0;
-    end else if (en) begin
+    end else if (en & penable) begin // Machine enabled and divided clock enabled
       jmp <= 0;
       pull <= 0;
       push <= 0;
@@ -141,11 +141,12 @@ module machine (
     .clk(clk),
     .reset(reset),
     .div(div),
-    .pclk(pclk)
+    .penable(penable)
   );
 
   pc pc_inst (
-    .pclk(pclk),
+    .clk(clk),
+    .penable(penable),
     .reset(reset),
     .din(op2),
     .jmp(jmp),
@@ -155,7 +156,8 @@ module machine (
   );
 
   scratch scratch_x (
-    .pclk(pclk),
+    .clk(clk),
+    .penable(penable),
     .reset(reset),
     .din(new_val),
     .set(setx),
@@ -164,7 +166,8 @@ module machine (
   );
 
   scratch scratch_y (
-    .pclk(pclk),
+    .clk(clk),
+    .penable(penable),
     .reset(reset),
     .din(new_val),
     .set(sety),
@@ -173,8 +176,6 @@ module machine (
   );
 
   decoder decoder_inst (
-    .pclk(clk),
-    .reset(reset),
     .instr(instr),
     .sideset_bits(sideset_bits),
     .op(op),
@@ -184,7 +185,8 @@ module machine (
   );
 
   shifter shift_in (
-    .pclk(pclk),
+    .clk(clk),
+    .penable(penable),
     .reset(reset),
     .dir(shift_dir),
     .shift(op2),
@@ -193,7 +195,8 @@ module machine (
   );
 
   shifter shift_out (
-    .pclk(pclk),
+    .clk(clk),
+    .penable(penable),
     .reset(reset),
     .dir(shift_dir),
     .shift(op2),

@@ -1,7 +1,5 @@
 `default_nettype none
 module decoder (
-  input        pclk,
-  input        reset,
   input [15:0] instr,
   input [2:0]  sideset_bits,
   output [2:0] op,

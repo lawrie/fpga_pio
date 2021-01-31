@@ -49,8 +49,9 @@ module pio (
       en <= 0;
       jmp_pin <= 0;
       for(i=0;i<4;i++) begin
-        div[i] <= 2;
+        div[i] <= 0; // no clock divider
         pend[i] <= 0;
+        pstart[i] <= 0;
         pins_out_count[i] <= 0;
         pins_out_base[i] <= 0;
         pins_set_count[i] <= 1;

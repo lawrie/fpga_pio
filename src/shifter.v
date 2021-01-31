@@ -1,6 +1,7 @@
 `default_nettype none
 module shifter (
-  input         pclk,
+  input         clk,
+  input         penable,
   input         reset,
   input [31:0]  din,
   input [4:0]   shift,
@@ -11,11 +12,13 @@ module shifter (
 
   reg [31:0] shift_reg;
 
-  always @(posedge pclk) begin
+  always @(posedge clk) begin
     if (reset)
       shift_reg <= 0;
-    else if (set)
-      shift_reg <= din;
+    else if (penable) begin
+       if (set)
+         shift_reg <= din;
+    end
   end
 
   assign dout = 0;
