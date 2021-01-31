@@ -7,9 +7,12 @@ module machine (
   input [31:0]  din,
   input [15:0]  instr,
   input [31:0]  input_pins,
+  input [31:0]  gpio_pins,
+  input [31:0]  irq_flags,
   input         imm,
 
   // Configuration
+  input [1:0]   mindex,
   input [4:0]   pstart,
   input [4:0]   pend,
   input         jmp_pin,
@@ -47,7 +50,6 @@ module machine (
 
   reg         waiting = 0;
   reg [31:0]  new_val;
-  reg [4:0]   delay1;
   reg [3:0]   sideset_count;
  
   // Divided clock 
@@ -63,6 +65,8 @@ module machine (
   wire [4:0]  op2;
   wire [4:0]  delay;
 
+  reg [4:0] delay_cnt = 0;
+
   // Instructions
   localparam JMP  = 0;
   localparam WAIT = 1;
@@ -76,7 +80,8 @@ module machine (
 
   // Execute the current instruction
   always @(posedge pclk) begin
-    if (reset) begin
+    if (reset) begin // TODO: reset doesn't work with pclk
+      delay_cnt <= 0;
     end else if (en) begin
       jmp <= 0;
       pull <= 0;
@@ -86,43 +91,49 @@ module machine (
       decy <= 0;
       setx <= 0;
       sety <= 0;
-      case (op)
-        JMP:  case (op1)
-                0: jmp <= 1;
-                1: jmp <= (x == 0);
-                2: begin jmp <= (x != 0); decx <= 1; end
-                3: jmp <= (y == 0);
-                4: begin jmp <= (y != 0); decy <= 1; end
-                5: jmp <= (x != y);
-                6: jmp <= jmp_pin;
-                7: jmp <= (out_shift != 0);
-              endcase
-	WAIT: case (op1[1:0])
-                0: waiting <= 1;
-              endcase
-        PULL: if (op1[2]) begin pull <= 1; set_shift <= 1; end
-        IN:   case (op1)
-                1: begin new_val <= in_shift; setx <= 1; end
-              endcase
-        SET:  case (op1)
-                0: begin
-                     if (pins_set_count > 4) output_pins[pins_set_base+4] <= op2[4];
-                     if (pins_set_count > 3) output_pins[pins_set_base+3] <= op2[3];
-                     if (pins_set_count > 2) output_pins[pins_set_base+2] <= op2[2];
-                     if (pins_set_count > 1) output_pins[pins_set_base+1] <= op2[1];
-                     if (pins_set_count > 0) output_pins[pins_set_base+0] <= op2[0];
-                   end
-                1: begin setx <= 1; new_val <= {27'b0, op2}; end
-                2: begin sety <= 1; new_val <= {27'b0, op2}; end
-                4: begin
-                     if (pins_set_count > 4) pin_directions[pins_set_base+4] <= op2[4];
-                     if (pins_set_count > 3) pin_directions[pins_set_base+3] <= op2[3];
-                     if (pins_set_count > 2) pin_directions[pins_set_base+2] <= op2[2];
-                     if (pins_set_count > 1) pin_directions[pins_set_base+1] <= op2[1];
-                     if (pins_set_count > 0) pin_directions[pins_set_base+0] <= op2[0];
-                   end
-              endcase
-      endcase
+      delay_cnt <= delay;
+      if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
+      else begin
+        case (op)
+          JMP:  case (op1)
+                  0: jmp <= 1;
+                  1: jmp <= (x == 0);
+                  2: begin jmp <= (x != 0); decx <= 1; end
+                  3: jmp <= (y == 0);
+                  4: begin jmp <= (y != 0); decy <= 1; end
+                  5: jmp <= (x != y);
+                  6: jmp <= jmp_pin;
+                  7: jmp <= (out_shift != 0);
+                endcase
+	  WAIT: case (op1[1:0])
+                  0: waiting <= gpio_pins[op2] != op1[2];
+                  1: waiting <= input_pins[op2] != op1[2];
+                  2: waiting <= irq_flags[op2] != op1[2];
+                endcase
+          PULL: if (op1[2]) begin pull <= 1; set_shift <= 1; end
+          IN:   case (op1)
+                  1: begin new_val <= in_shift; setx <= 1; end
+                endcase
+          SET:  case (op1)
+                  0: begin
+                       if (pins_set_count > 4) output_pins[pins_set_base+4] <= op2[4];
+                       if (pins_set_count > 3) output_pins[pins_set_base+3] <= op2[3];
+                       if (pins_set_count > 2) output_pins[pins_set_base+2] <= op2[2];
+                       if (pins_set_count > 1) output_pins[pins_set_base+1] <= op2[1];
+                       if (pins_set_count > 0) output_pins[pins_set_base+0] <= op2[0];
+                     end
+                  1: begin setx <= 1; new_val <= {27'b0, op2}; end
+                  2: begin sety <= 1; new_val <= {27'b0, op2}; end
+                  4: begin
+                       if (pins_set_count > 4) pin_directions[pins_set_base+4] <= op2[4];
+                       if (pins_set_count > 3) pin_directions[pins_set_base+3] <= op2[3];
+                       if (pins_set_count > 2) pin_directions[pins_set_base+2] <= op2[2];
+                       if (pins_set_count > 1) pin_directions[pins_set_base+1] <= op2[1];
+                       if (pins_set_count > 0) pin_directions[pins_set_base+0] <= op2[0];
+                     end
+                endcase
+        endcase
+      end
     end
   end
 
@@ -138,7 +149,7 @@ module machine (
     .reset(reset),
     .din(op2),
     .jmp(jmp),
-    .stalled(waiting | imm),
+    .stalled(waiting || imm || delay_cnt > 0),
     .pend(pend),
     .dout(pc)
   );
