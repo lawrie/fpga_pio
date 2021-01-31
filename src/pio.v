@@ -23,7 +23,6 @@ module pio (
   reg         imm;
   reg [3:0]   en;
   reg [3:0]   jmp_pin;
-  reg [2:0]   sideset_bits_1, sideset_bits_2, sideset_bits_3, sideset_bits_4;
   
   reg [4:0]   pstart [0:3];
   reg [4:0]   pend [0:3];
@@ -32,20 +31,22 @@ module pio (
   reg [2:0]   pins_out_count [0:3];
   reg [4:0]   pins_set_base [0:3];
   reg [2:0]   pins_set_count [0:3];
+  wire [31:0] output_pins [0:3];
+  wire [31:0] pin_directions [0:3];
+  reg [2:0]   sideset_bits [0:3];
 
   wire [4:0]  pc1, pc2, pc3, pc4;
   wire [31:0] din1, din2, din3, din4;
   wire [31:0] dout1, dout2, dout3, dout4;
+
+  assign gpio_out = output_pins[0]; // TODO: Combine outputs from machines
+  assign gpio_dir = pin_directions[0];
 
   integer i;
 
   // Configure machines  
   always @(posedge clk) begin
     if (reset) begin
-      sideset_bits_1 <= 0;
-      sideset_bits_2 <= 0;
-      sideset_bits_3 <= 0;
-      sideset_bits_4 <= 0;
       en <= 0;
       jmp_pin <= 0;
       for(i=0;i<4;i++) begin
@@ -54,8 +55,9 @@ module pio (
         pstart[i] <= 0;
         pins_out_count[i] <= 0;
         pins_out_base[i] <= 0;
-        pins_set_count[i] <= 1;
+        pins_set_count[i] <= 0;
         pins_set_base[i] <= 0;
+        sideset_bits[i] <= 0;
       end
     end else begin
      wrap <= 0;
@@ -69,7 +71,9 @@ module pio (
           end 
        3: pull <= 1;                 // Pop a value from fifo
        4: push <= 1;                 // Push a value to fifo
-       5: begin                      // Configure pins 
+       5: begin                      // Configure pin groups
+            pins_set_count[mindex] <= din[2:0];
+            pins_set_base[mindex]  <= din[7:3];
           end
        6: en <= din[3:0];            // Enable machines
        7: div[mindex] <= din[23:0];  // Configure clock dividers
@@ -85,10 +89,11 @@ module pio (
     .en(en[0]),
     .mindex(2'b0),
     .jmp_pin(jmp_pin[0]),
+    .gpio_pins(gpio_in),
     .input_pins(gpio_in),
-    .output_pins(gpio_out),
-    .pin_directions(gpio_dir),
-    .sideset_bits(sideset_bits_1),
+    .output_pins(output_pins[0]),
+    .pin_directions(pin_directions[0]),
+    .sideset_bits(sideset_bits[0]),
     .div(div[0]),
     .instr(imm ? din[15:0] : instr[pc1]),
     .imm(imm),
@@ -109,10 +114,11 @@ module pio (
     .en(en[1]),
     .mindex(2'b1),
     .jmp_pin(jmp_pin[1]),
+    .gpio_pins(gpio_in),
     .input_pins(gpio_in),
-    .output_pins(gpio_out),
-    .pin_directions(gpio_dir),
-    .sideset_bits(sideset_bits_2),
+    .output_pins(output_pins[1]),
+    .pin_directions(pin_directions[1]),
+    .sideset_bits(sideset_bits[1]),
     .div(div[1]),
     .instr(instr[pc2]),
     .pstart(pstart[1]),
@@ -132,10 +138,11 @@ module pio (
     .mindex(2'b10),
     .en(en[2]),
     .jmp_pin(jmp_pin[2]),
+    .gpio_pins(gpio_in),
     .input_pins(gpio_in),
-    .output_pins(gpio_out),
-    .pin_directions(gpio_dir),
-    .sideset_bits(sideset_bits_3),
+    .output_pins(output_pins[2]),
+    .pin_directions(pin_directions[2]),
+    .sideset_bits(sideset_bits[2]),
     .div(div[2]),
     .instr(instr[pc3]),
     .pstart(pstart[2]),
@@ -155,10 +162,11 @@ module pio (
     .en(en[3]),
     .mindex(2'b11),
     .jmp_pin(jmp_pin[3]),
+    .gpio_pins(gpio_in),
     .input_pins(gpio_in),
-    .output_pins(gpio_out),
-    .pin_directions(gpio_dir),
-    .sideset_bits(sideset_bits_4),
+    .output_pins(output_pins[3]),
+    .pin_directions(pin_directions[3]),
+    .sideset_bits(sideset_bits[3]),
     .div(div[3]),
     .instr(instr[pc4]),
     .pstart(pstart[3]),
