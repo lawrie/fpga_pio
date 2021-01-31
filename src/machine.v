@@ -7,6 +7,7 @@ module machine (
   input [31:0]  din,
   input [15:0]  instr,
   input [31:0]  input_pins,
+  input         imm,
 
   // Configuration
   input [4:0]   pstart,
@@ -22,6 +23,10 @@ module machine (
   input [4:0]   pins_side_base,
   input [2:0]   pins_side_count,
   input         shift_dir,
+  input         auto_pull,
+  input         auto_push,
+  input [4:0]   isr_threshold,
+  input [4:0]   osr_threshold,
 
   // Output
   output [4:0]  pc,
@@ -133,7 +138,7 @@ module machine (
     .reset(reset),
     .din(op2),
     .jmp(jmp),
-    .stalled(waiting),
+    .stalled(waiting | imm),
     .pend(pend),
     .dout(pc)
   );

@@ -20,6 +20,7 @@ module pio (
   reg         wrap;
   reg         pull;
   reg         push;
+  reg         imm;
   reg [3:0]   en;
   reg [3:0]   jmp_pin;
   reg [2:0]   sideset_bits_1, sideset_bits_2, sideset_bits_3, sideset_bits_4;
@@ -59,6 +60,7 @@ module pio (
      wrap <= 0;
      pull <= 0;
      push <= 0;
+     imm <= 0;
      case (action)
        1: instr[index] <= din[15:0]; // Set an instruction
        2: begin                      // Configure pend
@@ -71,6 +73,7 @@ module pio (
        6: en <= din[3:0];            // Enable machines
        7: div[mindex] <= din[23:0];  // Configure clock dividers
        8: begin end                  // Configure side-set bits
+       9: imm <= 1;                  // Immediate instruction
      endcase
     end
   end
@@ -85,7 +88,8 @@ module pio (
     .pin_directions(gpio_dir),
     .sideset_bits(sideset_bits_1),
     .div(div[0]),
-    .instr(instr[pc1]),
+    .instr(imm ? din[15:0] : instr[pc1]),
+    .imm(imm),
     .pstart(pstart[0]),
     .pend(pend[0]),
     .pins_out_base(pins_out_base[0]),
