@@ -37,9 +37,9 @@ module pio (
 
   reg [3:0]   push;
   reg [3:0]   pull;
-  
-  wire [3:0]   empty;
-  wire[3:0]    full;
+
+  wire [3:0]  empty;
+  wire[3:0]   full;
 
   wire [3:0]  mpush;
   wire [3:0]  mpull;
@@ -128,6 +128,10 @@ module pio (
         .pins_out_count(pins_out_count[j]),
         .pins_set_base(pins_set_base[j]),
         .pins_set_count(pins_set_count[j]),
+        .pins_in_base(pins_in_base[j]),
+        .pins_in_count(pins_in_count[j]),
+        .pins_side_base(pins_side_base[j]),
+        .pins_side_count(pins_side_count[j]),
         .pc(pc[j]),
         .din(mdin[j]),
         .dout(mdout[j]),
@@ -143,7 +147,7 @@ module pio (
     .clk(clk),
     .reset(reset),
     .push(push[0]),
-    .pull(pull[0]),
+    .pull(mpull[0]),
     .din(din),
     .dout(mdin[0]),
     .empty(empty[0])
@@ -152,7 +156,7 @@ module pio (
   fifo fifo_rx_1 (
     .clk(clk),
     .reset(reset),
-    .push(push[0]),
+    .push(mpush[0]),
     .pull(pull[0]),
     .din(din),
     .dout(dout),
@@ -163,7 +167,7 @@ module pio (
     .clk(clk),
     .reset(reset),
     .push(push[1]),
-    .pull(pull[1]),
+    .pull(mpull[1]),
     .din(din),
     .dout(mdin[1]),
     .empty(empty[1])
@@ -172,7 +176,7 @@ module pio (
   fifo fifo_rx_2 (
     .clk(clk),
     .reset(reset),
-    .push(push[1]),
+    .push(mpush[1]),
     .pull(pull[1]),
     .din(din),
     .dout(dout),
@@ -183,7 +187,7 @@ module pio (
     .clk(clk),
     .reset(reset),
     .push(push[2]),
-    .pull(pull[2]),
+    .pull(mpull[2]),
     .din(din),
     .dout(mdin[2]),
     .empty(empty[2])
@@ -192,7 +196,7 @@ module pio (
   fifo fifo_rx_3 (
     .clk(clk),
     .reset(reset),
-    .push(push[2]),
+    .push(mpush[2]),
     .pull(pull[2]),
     .din(din),
     .dout(dout),
@@ -203,16 +207,16 @@ module pio (
     .clk(clk),
     .reset(reset),
     .push(push[3]),
-    .pull(pull[3]),
+    .pull(mpull[3]),
     .din(din),
     .dout(mdin[3]),
-    .empty(empty[0])
+    .empty(empty[3])
   );
 
   fifo fifo_rx_4 (
     .clk(clk),
     .reset(reset),
-    .push(push[3]),
+    .push(mpush[3]),
     .pull(pull[3]),
     .din(din),
     .dout(dout),

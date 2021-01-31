@@ -26,15 +26,16 @@ module tb();
   // Configuration
   reg [15:0] program [0:31];
   initial begin
-    program[0] = 16'b111_00000_100_00001; // set pindirs 1
-    program[1] = 16'b111_00001_000_00001; // set pins 1 [1]
-    program[2] = 16'b111_00000_000_00000; // set pins 0 
-    program[3] = 16'b000_00000_000_00001; // jmp 1
+    program[0] = 16'b100_01111_100_00001; // pull side 1 [7]
+    program[1] = 16'b111_01110_001_00111; // set x 7, side 0 [7]
+    program[2] = 16'b011_00000_000_00001; // out pins 1
+    program[3] = 16'b000_01100_010_00011; // jmp x-- 3 [6]
   end
 
-  wire [5:0] plen = 4;          // Program length 4
-  wire [23:0] div = 24'h280;    // Clock divider 2.5
-  wire [31:0] pin_grps = 32'h1; // SET group in pin 0
+  wire [5:0]  plen = 4;                // Program length 4
+  wire [23:0] div = 24'h0 ;            // Clock divider 0
+  wire [31:0] pin_grps = 32'h01000001; // SET and SIDE groups both GPIO 0
+  wire [4:0]  sideset_bits = 1;        // Side set bits 
 
   integer i;
 
@@ -72,6 +73,12 @@ module tb();
 
     repeat(2) @(posedge clk);
 
+    // Configure side-set bits
+    action = 8;
+    din = sideset_bits;
+
+    repeat(2) @(posedge clk);
+
     // Enable machine 1
     action = 6;
     din = 1;
@@ -82,7 +89,22 @@ module tb();
     action = 0; 
     
     // Run for a while
-    repeat(100) @(posedge clk);
+    repeat(2) @(posedge clk);
+
+    for(i=0;i<10;i=i+1) begin
+      // Send data to FIFO
+      @(negedge clk);
+      
+      action = 4;
+      din = 32'h31323334;
+
+      @(negedge clk);
+
+      action = 0; 
+
+      // Run for a while
+      repeat(50) @(posedge clk);
+    end
 
     $finish;
   end

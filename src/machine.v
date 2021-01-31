@@ -109,7 +109,7 @@ module machine (
   always @(posedge clk) begin
     if (en & penable) begin
       if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
-      else delay_cnt <= delay;
+      else if (!waiting) delay_cnt <= delay;
       if (sideset_bits > 0) begin
         if (pins_side_count > 4) output_pins[pins_side_base+4] = side_set[4];
         if (pins_side_count > 3) output_pins[pins_side_base+3] = side_set[3];
