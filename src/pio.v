@@ -26,8 +26,11 @@ module pio (
   
   reg [4:0]   pstart [0:3];
   reg [4:0]   pend [0:3];
-  reg  [23:0] div [0:3];
-  
+  reg [23:0]  div [0:3];
+  reg [4:0]   pins_out_base [0:3];
+  reg [2:0]   pins_out_count [0:3];
+  reg [4:0]   pins_set_base [0:3];
+  reg [2:0]   pins_set_count [0:3];
 
   wire [4:0]  pc1, pc2, pc3, pc4;
   wire [31:0] din1, din2, din3, din4;
@@ -47,6 +50,10 @@ module pio (
       for(i=0;i<4;i++) begin
         div[i] <= 2;
         pend[i] <= 0;
+        pins_out_count[i] <= 0;
+        pins_out_base[i] <= 0;
+        pins_set_count[i] <= 1;
+        pins_set_base[i] <= 0;
       end
     end else begin
      wrap <= 0;
@@ -60,7 +67,6 @@ module pio (
        3: pull <= 1;                 // Pop a value from fifo
        4: push <= 1;                 // Push a value to fifo
        5: begin                      // Configure pins 
-            
           end
        6: en <= din[3:0];            // Enable machines
        7: div[mindex] <= din[23:0];  // Configure clock dividers
@@ -82,6 +88,10 @@ module pio (
     .instr(instr[pc1]),
     .pstart(pstart[0]),
     .pend(pend[0]),
+    .pins_out_base(pins_out_base[0]),
+    .pins_out_count(pins_out_count[0]),
+    .pins_set_base(pins_set_base[0]),
+    .pins_set_count(pins_set_count[0]),
     .pc(pc1),
     .din(din1),
     .dout(dout1)

@@ -5,7 +5,7 @@ module decoder (
   input [15:0] instr,
   input [2:0]  sideset_bits,
   output [2:0] op,
-  output [4:0] op1,
+  output [2:0] op1,
   output [4:0] op2,
   output [4:0] delay,
   output [4:0] side_set

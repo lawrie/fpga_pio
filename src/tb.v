@@ -32,28 +32,43 @@ module tb();
     // Set the instructions
     action = 1;
     index = 0;
-    din = 16'b111_00000_010_00001; // set pindirs 1   
+    din = 16'b111_00000_100_00001; // set pindirs 1   
 
-    @(posedge clk);
+    repeat(2) @(posedge clk);
 
-    // Set wrap to 2 for machine 1
+    index = 1;
+    din = 16'b111_00001_000_00001; // set pins 1 [1]  
+
+    repeat(2) @(posedge clk);
+
+    index = 2;
+    din = 16'b111_00000_000_00000; // set pins 0  
+
+    repeat(2) @(posedge clk);
+
+    index = 3;
+    din = 16'b000_00000_000_00001; // jmp 1
+
+    repeat(2) @(posedge clk);
+
+    // Set wrap to 3 for machine 1
     mindex = 0;
     action = 2;
-    index = 0;
+    index = 3;
 
-    @(posedge clk);
+    repeat(2) @(posedge clk);
 
-    // Set clock divider to 2
+    // Set clock divider to 4
     action = 7;
-    din  = 2;
+    din  = 4;
 
-    @(posedge clk);
+    repeat(2) @(posedge clk);
 
     // Enable machine 1
     action = 6;
     din = 1;
 
-    @(posedge clk);
+    repeat(2) @(posedge clk);
 
     // Configuration done
     action = 0; 

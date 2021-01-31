@@ -9,7 +9,7 @@ module pc (
   output [4:0] dout
 );
 
-  reg [4:0] index;
+  reg [4:0] index = 0;
 
   assign dout = index;
 

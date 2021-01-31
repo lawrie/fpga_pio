@@ -40,7 +40,7 @@ module machine (
   reg         decy;
   reg         set_shift;
 
-  reg         waiting;
+  reg         waiting = 0;
   reg [31:0]  new_val;
   reg [4:0]   delay1;
   reg [3:0]   sideset_count;
@@ -54,7 +54,7 @@ module machine (
   wire [31:0] in_shift;
   wire [31:0] out_shift;
   wire [2:0]  op;
-  wire [4:0]  op1;
+  wire [2:0]  op1;
   wire [4:0]  op2;
   wire [4:0]  delay;
 
@@ -101,20 +101,20 @@ module machine (
               endcase
         SET:  case (op1)
                 0: begin
-                     if (pins_out_count > 4) output_pins[pins_out_base+4] <= op2[4];
-                     if (pins_out_count > 3) output_pins[pins_out_base+3] <= op2[3];
-                     if (pins_out_count > 2) output_pins[pins_out_base+2] <= op2[2];
-                     if (pins_out_count > 1) output_pins[pins_out_base+1] <= op2[1];
-                     if (pins_out_count > 0) output_pins[pins_out_base+0] <= op2[0];
+                     if (pins_set_count > 4) output_pins[pins_set_base+4] <= op2[4];
+                     if (pins_set_count > 3) output_pins[pins_set_base+3] <= op2[3];
+                     if (pins_set_count > 2) output_pins[pins_set_base+2] <= op2[2];
+                     if (pins_set_count > 1) output_pins[pins_set_base+1] <= op2[1];
+                     if (pins_set_count > 0) output_pins[pins_set_base+0] <= op2[0];
                    end
                 1: begin setx <= 1; new_val <= {27'b0, op2}; end
                 2: begin sety <= 1; new_val <= {27'b0, op2}; end
                 4: begin
-                     if (pins_out_count > 4) pin_directions[pins_out_base+4] <= op2[4];
-                     if (pins_out_count > 3) pin_directions[pins_out_base+3] <= op2[3];
-                     if (pins_out_count > 2) pin_directions[pins_out_base+2] <= op2[2];
-                     if (pins_out_count > 1) pin_directions[pins_out_base+1] <= op2[1];
-                     if (pins_out_count > 0) pin_directions[pins_out_base+0] <= op2[0];
+                     if (pins_set_count > 4) pin_directions[pins_set_base+4] <= op2[4];
+                     if (pins_set_count > 3) pin_directions[pins_set_base+3] <= op2[3];
+                     if (pins_set_count > 2) pin_directions[pins_set_base+2] <= op2[2];
+                     if (pins_set_count > 1) pin_directions[pins_set_base+1] <= op2[1];
+                     if (pins_set_count > 0) pin_directions[pins_set_base+0] <= op2[0];
                    end
               endcase
       endcase
