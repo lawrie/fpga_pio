@@ -21,8 +21,17 @@ module tb();
   reg [31:0]  gpio_in = 0; 
   wire [31:0] gpio_out; 
   wire[31:0]  gpio_dir; 
-
   wire [31:0] dout;
+
+  reg [15:0] program [0:31];
+  initial begin
+    program[0] = 16'b111_00000_100_00001; // set pindirs 1
+    program[1] = 16'b111_00001_000_00001; // set pins 1 [1]
+    program[2] = 16'b111_00000_000_00000; // set pins 0 
+    program[3] = 16'b000_00000_000_00001; // jmp 1
+  end
+
+  integer i;
 
   initial begin
     reset = 1'b1;
@@ -31,25 +40,13 @@ module tb();
 
     // Set the instructions
     action = 1;
-    index = 0;
-    din = 16'b111_00000_100_00001; // set pindirs 1   
 
-    repeat(2) @(posedge clk);
+    for(i=0;i<4;i++) begin
+      index = i;
+      din = program[i];
 
-    index = 1;
-    din = 16'b111_00001_000_00001; // set pins 1 [1]  
-
-    repeat(2) @(posedge clk);
-
-    index = 2;
-    din = 16'b111_00000_000_00000; // set pins 0  
-
-    repeat(2) @(posedge clk);
-
-    index = 3;
-    din = 16'b000_00000_000_00001; // jmp 1
-
-    repeat(2) @(posedge clk);
+      repeat(2) @(posedge clk);
+    end
 
     // Set wrap to 3 for machine 1
     mindex = 0;

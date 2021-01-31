@@ -117,6 +117,10 @@ module pio (
     .instr(instr[pc2]),
     .pstart(pstart[1]),
     .pend(pend[1]),
+    .pins_out_base(pins_out_base[1]),
+    .pins_out_count(pins_out_count[1]),
+    .pins_set_base(pins_set_base[1]),
+    .pins_set_count(pins_set_count[1]),
     .pc(pc2),
     .din(din2),
     .dout(dout2)
@@ -136,6 +140,10 @@ module pio (
     .instr(instr[pc3]),
     .pstart(pstart[2]),
     .pend(pend[2]),
+    .pins_out_base(pins_out_base[2]),
+    .pins_out_count(pins_out_count[2]),
+    .pins_set_base(pins_set_base[2]),
+    .pins_set_count(pins_set_count[2]),
     .pc(pc3),
     .din(din3),
     .dout(dout3)
@@ -155,6 +163,10 @@ module pio (
     .instr(instr[pc4]),
     .pstart(pstart[3]),
     .pend(pend[3]),
+    .pins_out_base(pins_out_base[3]),
+    .pins_out_count(pins_out_count[3]),
+    .pins_set_base(pins_set_base[3]),
+    .pins_set_count(pins_set_count[3]),
     .pc(pc4),
     .din(din4),
     .dout(dout4)

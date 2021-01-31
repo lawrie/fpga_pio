@@ -137,14 +137,14 @@ module machine (
     end
   end
 
-  divider divider_inst (
+  divider clk_divider (
     .clk(clk),
     .reset(reset),
     .div(div),
     .penable(penable)
   );
 
-  pc pc_inst (
+  pc pc_reg (
     .clk(clk),
     .penable(penable),
     .reset(reset),
