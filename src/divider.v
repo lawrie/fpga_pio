@@ -6,14 +6,14 @@ module divider (
   output reg    pclk
 );
 
-  reg [15:0] div_counter;
+  reg [31:0] div_counter;
   always @(posedge clk) begin
     if (reset) begin
       div_counter <= 0;
       pclk <= 0;
     end else begin
-      div_counter <= div_counter + 1;
-      if (div_counter == div -1)
+      div_counter <= div_counter + 256;
+      if (div_counter >= div -1)
         div_counter <= 0;
       pclk <= div_counter < (div >> 1);
     end

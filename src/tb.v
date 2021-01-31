@@ -58,9 +58,9 @@ module tb();
 
     repeat(2) @(posedge clk);
 
-    // Set clock divider to 4
+    // Set fractional clock divider to 2.5
     action = 7;
-    din  = 4;
+    din  = 'h280;
 
     repeat(2) @(posedge clk);
 
