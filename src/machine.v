@@ -49,10 +49,10 @@ module machine (
   reg         decx;
   reg         decy;
   reg         set_shift;
+  reg         do_shift;
 
   reg         waiting = 0;
   reg [31:0]  new_val;
-  reg [3:0]   sideset_count;
  
   // Divided clock enable signal 
   wire        penable;
@@ -66,6 +66,7 @@ module machine (
   wire [2:0]  op1;
   wire [4:0]  op2;
   wire [4:0]  delay;
+  wire [4:0]  side_set;
 
   reg [4:0] delay_cnt = 0;
 
@@ -111,6 +112,7 @@ module machine (
       pull <= 0;
       push <= 0;
       set_shift <= 0;
+      do_shift <= 0;
       decx <= 0;
       decy <= 0;
       setx <= 0;
@@ -118,17 +120,27 @@ module machine (
       delay_cnt <= delay;
       if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
       else begin
+        if (sideset_bits > 0) begin
+          if (pins_side_count > 4) output_pins[pins_side_base+4] <= side_set[4];
+          if (pins_side_count > 3) output_pins[pins_side_base+3] <= side_set[3];
+          if (pins_side_count > 2) output_pins[pins_side_base+2] <= side_set[2];
+          if (pins_side_count > 1) output_pins[pins_side_base+1] <= side_set[1];
+          if (pins_side_count > 0) output_pins[pins_side_base+0] <= side_set[0];
+        end
         case (op)
-          JMP:  case (op1)
-                  0: jmp <= 1;
-                  1: jmp <= (x == 0);
-                  2: begin jmp <= (x != 0); decx <= 1; end
-                  3: jmp <= (y == 0);
-                  4: begin jmp <= (y != 0); decy <= 1; end
-                  5: jmp <= (x != y);
-                  6: jmp <= jmp_pin;
-                  7: jmp <= (out_shift != 0);
-                endcase
+          JMP:  begin
+                  new_val[4:0] <= op2; 
+                  case (op1)
+                    0: jmp <= 1;
+                    1: jmp <= (x == 0);
+                    2: begin jmp <= (x != 0); decx <= 1; end
+                    3: jmp <= (y == 0);
+                    4: begin jmp <= (y != 0); decy <= 1; end
+                    5: jmp <= (x != y);
+                    6: jmp <= jmp_pin;
+                    7: jmp <= (out_shift != 0);
+                  endcase
+                end
 	  WAIT: case (op1[1:0])
                   0: waiting <= gpio_pins[op2] != op1[2];
                   1: waiting <= input_pins[op2] != op1[2];
@@ -137,16 +149,31 @@ module machine (
           IN:   case (op1)
                   1: begin new_val <= in_shift; setx <= 1; end
                 endcase
-          OUT:  begin end
-          PUSH: if (!op1[0]) begin end                                               // Push
-                else begin pull <= 1; set_shift <= 1; waiting <= op[0] && empty; end // Pull
+          OUT:  case (op1)
+                  0: begin end // Pins
+                  1: begin do_shift <= 1; new_val <= out_shift; setx <= 1; end // X
+                  2: begin end // Y
+                  4: begin end // Pindirs
+                  5: begin end // PC
+                endcase
+          PUSH: if (!op1[2]) begin end                                               // Push
+                //else begin pull <= 1; set_shift <= 1; waiting <= op[0] && empty; end // Pull
+                else begin pull <= 1; set_shift <= 1; waiting <= empty; end // Pull
           MOV:  case (op1)
-                  1: case (op2[2:0])
-                       2: begin new_val <= bit_op(y, op2[4:3]); setx <= 1; end
+                  0: begin end // Pins
+                  1: case (op2[2:0]) // X
+                       2: begin new_val <= bit_op(y, op2[4:3]); setx <= 1; end // Y
                      endcase
-                  2: case (op2[2:0])
-                       1: begin new_val <= bit_op(x, op2[4:3]); sety <= 1; end
+                  2: case (op2[2:0]) // Y
+                       1: begin new_val <= bit_op(x, op2[4:3]); sety <= 1; end // X
                      endcase
+                  4: begin end // Exec
+                  5: case (op2[2:0]) // PC
+                       1: begin new_val <= bit_op(x, op2[4:3]); jmp <= 1; end // X
+                       2: begin new_val <= bit_op(y, op2[4:3]); jmp <= 1; end // Y
+                     endcase
+                  6: begin end // ISR
+                  7: begin end // OSR
                 endcase
           IRQ:  begin end
           SET:  case (op1)
@@ -181,9 +208,9 @@ module machine (
 
   pc pc_reg (
     .clk(clk),
-    .penable(penable),
+    .penable(en & penable),
     .reset(reset),
-    .din(op2),
+    .din(new_val[4:0]),
     .jmp(jmp),
     .stalled(waiting || imm || delay_cnt > 0),
     .pend(pend),
@@ -192,7 +219,7 @@ module machine (
 
   scratch scratch_x (
     .clk(clk),
-    .penable(penable),
+    .penable(en & penable),
     .reset(reset),
     .din(new_val),
     .set(setx),
@@ -202,7 +229,7 @@ module machine (
 
   scratch scratch_y (
     .clk(clk),
-    .penable(penable),
+    .penable(en & penable),
     .reset(reset),
     .din(new_val),
     .set(sety),
@@ -216,12 +243,13 @@ module machine (
     .op(op),
     .op1(op1),
     .op2(op2),
-    .delay(delay)
+    .delay(delay),
+    .side_set(side_set)
   );
 
   shifter shift_in (
     .clk(clk),
-    .penable(penable),
+    .penable(en & penable),
     .reset(reset),
     .dir(shift_dir),
     .shift(op2),
@@ -231,11 +259,12 @@ module machine (
 
   shifter shift_out (
     .clk(clk),
-    .penable(penable),
+    .penable(en & penable),
     .reset(reset),
     .dir(shift_dir),
     .shift(op2),
     .set(set_shift),
+    .do_shift(do_shift),
     .din(din),
     .dout(out_shift)
   );

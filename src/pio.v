@@ -22,14 +22,19 @@ module pio (
   reg [3:0]   jmp_pin;
   reg         imm;
   
-  reg [4:0]   pstart [0:3];
-  reg [4:0]   pend [0:3];
-  reg [23:0]  div [0:3];
-  reg [4:0]   pins_out_base [0:3];
-  reg [2:0]   pins_out_count [0:3];
-  reg [4:0]   pins_set_base [0:3];
-  reg [2:0]   pins_set_count [0:3];
-  reg [2:0]   sideset_bits [0:3];
+  reg [4:0]   pstart          [0:3];
+  reg [4:0]   pend            [0:3];
+  reg [23:0]  div             [0:3];
+  reg [4:0]   pins_in_base    [0:3];
+  reg [2:0]   pins_in_count   [0:3];
+  reg [4:0]   pins_out_base   [0:3];
+  reg [2:0]   pins_out_count  [0:3];
+  reg [4:0]   pins_set_base   [0:3];
+  reg [2:0]   pins_set_count  [0:3];
+  reg [4:0]   pins_side_base  [0:3];
+  reg [2:0]   pins_side_count [0:3];
+  reg [2:0]   sideset_bits    [0:3];
+
   reg [3:0]   push;
   reg [3:0]   pull;
   
@@ -58,10 +63,14 @@ module pio (
         div[i] <= 0; // no clock divider
         pend[i] <= 0;
         pstart[i] <= 0;
+        pins_in_count[i] <= 0;
+        pins_in_base[i] <= 0;
         pins_out_count[i] <= 0;
         pins_out_base[i] <= 0;
         pins_set_count[i] <= 0;
         pins_set_base[i] <= 0;
+        pins_side_count[i] <= 0;
+        pins_side_base[i] <= 0;
         sideset_bits[i] <= 0;
       end
     end else begin
@@ -70,21 +79,27 @@ module pio (
      push <= 0;
      imm <= 0;
      case (action)
-       1: instr[index] <= din[15:0]; // Set an instruction
-       2: begin                      // Configure pend
+       1: instr[index] <= din[15:0];        // Set an instruction
+       2: begin                             // Configure pend
             pend[mindex] <= index; 
           end 
-       3: pull[mindex] <= 1;         // Pop a value from fifo
-       4: push[mindex] <= 1;         // Push a value to fifo
-       5: begin                      // Configure pin groups
-            pins_set_count[mindex] <= din[2:0];
-            pins_set_base[mindex]  <= din[7:3];
+       3: pull[mindex] <= 1;                // Pull a value from fifo
+       4: push[mindex] <= 1;                // Push a value to fifo
+       5: begin                             // Configure pin groups
+            pins_set_count[mindex]  <= din[2:0];
+            pins_set_base[mindex]   <= din[7:3];
+            pins_out_count[mindex]  <= din[10:8];
+            pins_out_base[mindex]   <= din[15:11];
+            pins_in_count[mindex]   <= din[18:16];
+            pins_in_base[mindex]    <= din[23:19];
+            pins_side_count[mindex] <= din[26:24];
+            pins_side_base[mindex]  <= din[31:27];
           end
-       6: en <= din[3:0];            // Enable machines
-       7: div[mindex] <= din[23:0];  // Configure clock dividers
-       8: begin end                  // Configure side-set bits
-       9: imm <= 1;                  // Immediate instruction
-      10: jmp_pin <= din[3:0];       // Configure jump pins
+       6: en <= din[3:0];                   // Enable machines
+       7: div[mindex] <= din[23:0];         // Configure clock dividers
+       8: sideset_bits[mindex] <= din[4:0]; // Configure side-set bits
+       9: imm <= 1;                         // Immediate instruction
+      10: jmp_pin <= din[3:0];              // Configure jump pins
      endcase
     end
   end
