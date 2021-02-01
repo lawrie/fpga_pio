@@ -8,7 +8,7 @@ module machine (
   input [15:0]  instr,
   input [31:0]  input_pins,
   input [31:0]  gpio_pins,
-  input [31:0]  irq_flags,
+  input [7:0]   irq_flags_in,
   input         imm,
   input         empty,
   input         full,
@@ -40,7 +40,8 @@ module machine (
   output reg    pull, // Get data from input FIFO
   output [31:0] dout,
   output reg [31:0] output_pins,
-  output reg [31:0] pin_directions
+  output reg [31:0] pin_directions,
+  output reg [7:0] irq_flags_out
 );
 
   // Strobes to implement instructions 
@@ -79,6 +80,8 @@ module machine (
   wire        sideset_enabled;
 
   wire pin0 = output_pins[0];
+  wire [1:0] irq_rel = op2[4] ? mindex + op2[1:0] : op2[1:0];
+  wire [2:0] irq_index = {op2[2], irq_rel};
 
   reg [4:0] delay_cnt = 0;
 
@@ -198,7 +201,7 @@ module machine (
 	  WAIT: case (op1[1:0])
                   0: waiting = gpio_pins[op2] != op1[2];
                   1: waiting = input_pins[op2] != op1[2];
-                  2: waiting = irq_flags[op2] != op1[2];
+                  2: waiting = irq_flags_out[op2] != op1[2];
                 endcase
           IN:   case (op1)
                   1: begin new_val = in_shift; setx = 1; end
@@ -228,7 +231,13 @@ module machine (
                   6: begin end // ISR
                   7: begin end // OSR
                 endcase
-          IRQ:  begin end
+          IRQ:  begin
+                  if (op1[1]) irq_flags_out[irq_index] = 0;
+                  else begin
+                    irq_flags_out[irq_index] = 1;
+                    waiting = op1[0] && irq_flags_in[irq_index] != 0;
+                  end
+                end
           SET:  case (op1)
                   0: set_set_pins = 1;
                   1: begin setx = 1; new_val = {27'b0, op2}; end
