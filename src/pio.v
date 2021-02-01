@@ -34,7 +34,7 @@ module pio (
   reg [4:0]   pins_side_base  [0:3];
   reg [2:0]   pins_side_count [0:3];
   reg [2:0]   sideset_bits    [0:3];
-  reg [3:0]   sideset_enable_bit;
+  reg [3:0]   sideset_enable_bit = 4'b1111;
   reg [3:0]   shift_dir = 4'b1111;
 
   reg [3:0]   push;
@@ -62,7 +62,6 @@ module pio (
     if (reset) begin
       en <= 0;
       jmp_pin <= 0;
-      sideset_enable_bit <= 0;
       for(i=0;i<4;i++) begin
         div[i] <= 0; // no clock divider
         pend[i] <= 0;

@@ -17,10 +17,10 @@ module pc (
   always @(posedge clk) begin
     if (reset)
       index <= 0;
-    else if (penable) begin
+    else if (penable && !stalled) begin
       if (jmp)
         index <= din;
-      else if (!stalled)
+      else
         index <= index == pend ? 0 : index + 1;
     end
   end

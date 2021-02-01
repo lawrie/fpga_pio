@@ -3,6 +3,7 @@ module shifter (
   input         clk,
   input         penable,
   input         reset,
+  input         stalled,
   input [31:0]  din,
   input [4:0]   shift,
   input         dir,
@@ -14,26 +15,25 @@ module shifter (
 
   reg [63:0] shift_reg;
   reg [6:0]  count;
+  wire [63:0] new_shift = dir ? shift_reg >> shift : shift_reg << shift;
 
   always @(posedge clk) begin
     if (reset) begin
       shift_reg <= 0;
       count <= 0;
-    end else if (penable) begin
+    end else if (penable && !stalled) begin
        if (set) begin
-         if (dir) shift_reg[63:32]  <= din; // For right shift
-         else shift_reg[31:0] <= din;       // For left shift
+         if (dir) shift_reg <= {din, 32'b0}; // For right shift
+         else shift_reg <= {32'b0, din};     // For left shift
+         count <= 0;
        end else if (do_shift) begin
-         if (dir)
-           shift_reg = shift_reg >> shift;
-         else
-           shift_reg = shift_reg << shift;
+         shift_reg <= new_shift;
          count <= count + shift > 32 ? 32 : count + shift;
        end
     end
   end
 
-  assign dout = dir ? shift_reg[31:0] > (32 - shift)  : shift_reg[63:32]; // TODO correct left shift
+  assign dout = dir ? (new_shift[31:0] >> (32 - shift))  : new_shift[63:32]; // TODO correct left shift
   assign shift_count = count;
 
 endmodule

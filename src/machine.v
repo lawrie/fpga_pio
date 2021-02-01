@@ -120,7 +120,12 @@ module machine (
     if (en & penable) begin
       if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
       else if (!waiting) delay_cnt <= delay;
-      if (sideset_bits > 0) begin
+    end
+  end
+  
+  always @(posedge clk)
+    if (en & penable) begin
+      if (sideset_enabled) begin
         if (pins_side_count > 4) output_pins[pins_side_base+4] <= side_set[4];
         if (pins_side_count > 3) output_pins[pins_side_base+3] <= side_set[3];
         if (pins_side_count > 2) output_pins[pins_side_base+2] <= side_set[2];
@@ -141,21 +146,20 @@ module machine (
          if (pins_set_count > 1) pin_directions[pins_set_base+1] <= op2[1];
          if (pins_set_count > 0) pin_directions[pins_set_base+0] <= op2[0];
        end
-      if (set_set_pins) begin
-         if (pins_out_count > 4) output_pins[pins_out_base+4] <= op2[4];
-         if (pins_out_count > 3) output_pins[pins_out_base+3] <= op2[3];
-         if (pins_out_count > 2) output_pins[pins_out_base+2] <= op2[2];
-         if (pins_out_count > 1) output_pins[pins_out_base+1] <= op2[1];
-         if (pins_out_count > 0) output_pins[pins_out_base+0] <= op2[0];
+       if (set_out_pins) begin
+         if (pins_out_count > 4) output_pins[pins_out_base+4] <= new_val[4];
+         if (pins_out_count > 3) output_pins[pins_out_base+3] <= new_val[3];
+         if (pins_out_count > 2) output_pins[pins_out_base+2] <= new_val[2];
+         if (pins_out_count > 1) output_pins[pins_out_base+1] <= new_val[1];
+         if (pins_out_count > 0) output_pins[pins_out_base+0] <= new_val[0];
        end
-       if (set_set_dirs) begin
+       if (set_out_dirs) begin
          if (pins_out_count > 4) pin_directions[pins_out_base+4] <= op2[4];
          if (pins_out_count > 3) pin_directions[pins_out_base+3] <= op2[3];
          if (pins_out_count > 2) pin_directions[pins_out_base+2] <= op2[2];
          if (pins_out_count > 1) pin_directions[pins_out_base+1] <= op2[1];
          if (pins_out_count > 0) pin_directions[pins_out_base+0] <= op2[0];
        end
-    end
   end
   
   // Execute the current instruction
@@ -258,6 +262,7 @@ module machine (
     .clk(clk),
     .penable(en & penable),
     .reset(reset),
+    .stalled(delay_cnt > 0),
     .din(new_val),
     .set(setx),
     .dec(decx),
@@ -268,6 +273,7 @@ module machine (
     .clk(clk),
     .penable(en & penable),
     .reset(reset),
+    .stalled(delay_cnt > 0),
     .din(new_val),
     .set(sety),
     .dec(decy),
@@ -290,6 +296,7 @@ module machine (
     .clk(clk),
     .penable(en & penable),
     .reset(reset),
+    .stalled(delay_cnt > 0),
     .dir(shift_dir),
     .shift(op2),
     .din(din),
@@ -300,6 +307,7 @@ module machine (
     .clk(clk),
     .penable(en & penable),
     .reset(reset),
+    .stalled(delay_cnt > 0),
     .dir(shift_dir),
     .shift(op2),
     .set(set_shift),

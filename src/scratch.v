@@ -3,6 +3,7 @@ module scratch (
   input         clk,
   input         penable,
   input         reset,
+  input         stalled,
   input [31:0]  din,
   input         set,
   input         dec,
@@ -16,7 +17,7 @@ module scratch (
   always @(posedge clk) begin
     if (reset)
       val <= 0;
-    else if (penable) begin
+    else if (penable && !stalled) begin
       if (set)
         val <= din;
       else if (dec)
