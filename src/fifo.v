@@ -19,7 +19,7 @@ module fifo (
     if (reset) begin
       first <= 0;
       last <= 0;
-      count = 0;
+      count <= 0;
     end else begin
       if (push && !full) begin
         last <= last + 1;
