@@ -19,6 +19,7 @@ module machine (
   input [4:0]   pend,
   input         jmp_pin,
   input [2:0]   sideset_bits,
+  input         sideset_enable_bit,
   input [4:0]   pins_out_base,
   input [2:0]   pins_out_count,
   input [4:0]   pins_set_base,
@@ -53,7 +54,7 @@ module machine (
   reg         set_set_pins;
   reg         set_set_dirs;
 
-  reg         waiting = 0;
+  reg         waiting;
   reg [31:0]  new_val;
  
   // Divided clock enable signal 
@@ -69,6 +70,9 @@ module machine (
   wire [4:0]  op2;
   wire [4:0]  delay;
   wire [4:0]  side_set;
+  wire        sideset_enabled;
+
+  wire pin0 = output_pins[0];
 
   reg [4:0] delay_cnt = 0;
 
@@ -111,25 +115,25 @@ module machine (
       if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
       else if (!waiting) delay_cnt <= delay;
       if (sideset_bits > 0) begin
-        if (pins_side_count > 4) output_pins[pins_side_base+4] = side_set[4];
-        if (pins_side_count > 3) output_pins[pins_side_base+3] = side_set[3];
-        if (pins_side_count > 2) output_pins[pins_side_base+2] = side_set[2];
-        if (pins_side_count > 1) output_pins[pins_side_base+1] = side_set[1];
-        if (pins_side_count > 0) output_pins[pins_side_base+0] = side_set[0];
+        if (pins_side_count > 4) output_pins[pins_side_base+4] <= side_set[4];
+        if (pins_side_count > 3) output_pins[pins_side_base+3] <= side_set[3];
+        if (pins_side_count > 2) output_pins[pins_side_base+2] <= side_set[2];
+        if (pins_side_count > 1) output_pins[pins_side_base+1] <= side_set[1];
+        if (pins_side_count > 0) output_pins[pins_side_base+0] <= side_set[0];
       end
       if (set_set_pins) begin
-         if (pins_set_count > 4) output_pins[pins_set_base+4] = op2[4];
-         if (pins_set_count > 3) output_pins[pins_set_base+3] = op2[3];
-         if (pins_set_count > 2) output_pins[pins_set_base+2] = op2[2];
-         if (pins_set_count > 1) output_pins[pins_set_base+1] = op2[1];
-         if (pins_set_count > 0) output_pins[pins_set_base+0] = op2[0];
+         if (pins_set_count > 4) output_pins[pins_set_base+4] <= op2[4];
+         if (pins_set_count > 3) output_pins[pins_set_base+3] <= op2[3];
+         if (pins_set_count > 2) output_pins[pins_set_base+2] <= op2[2];
+         if (pins_set_count > 1) output_pins[pins_set_base+1] <= op2[1];
+         if (pins_set_count > 0) output_pins[pins_set_base+0] <= op2[0];
        end
        if (set_set_dirs) begin
-         if (pins_set_count > 4) pin_directions[pins_set_base+4] = op2[4];
-         if (pins_set_count > 3) pin_directions[pins_set_base+3] = op2[3];
-         if (pins_set_count > 2) pin_directions[pins_set_base+2] = op2[2];
-         if (pins_set_count > 1) pin_directions[pins_set_base+1] = op2[1];
-         if (pins_set_count > 0) pin_directions[pins_set_base+0] = op2[0];
+         if (pins_set_count > 4) pin_directions[pins_set_base+4] <= op2[4];
+         if (pins_set_count > 3) pin_directions[pins_set_base+3] <= op2[3];
+         if (pins_set_count > 2) pin_directions[pins_set_base+2] <= op2[2];
+         if (pins_set_count > 1) pin_directions[pins_set_base+1] <= op2[1];
+         if (pins_set_count > 0) pin_directions[pins_set_base+0] <= op2[0];
        end
     end
   end
@@ -180,8 +184,8 @@ module machine (
                   4: begin end // Pindirs
                   5: begin end // PC
                 endcase
-          PUSH: if (!op1[2]) begin end                                               // Push
-                else begin pull <= 1; set_shift <= 1; waiting <= op[0] && empty; end // Pull
+          PUSH: if (!op1[2]) begin end                                                // Push
+                else begin pull = 1; set_shift = 1; waiting = op1[0] && empty; end // Pull
           MOV:  case (op1)
                   0: begin end // Pins
                   1: case (op2[2:0]) // X
@@ -223,7 +227,7 @@ module machine (
     .reset(reset),
     .din(new_val[4:0]),
     .jmp(jmp),
-    .stalled(waiting || imm || delay_cnt > 0),
+    .stalled(waiting || imm || (delay >0 && delay_cnt != 1)),
     .pend(pend),
     .dout(pc)
   );
@@ -248,9 +252,11 @@ module machine (
     .dout(y)
   );
 
-  decoder decoder_inst (
+  decoder decode (
     .instr(instr),
     .sideset_bits(sideset_bits),
+    .sideset_enable_bit(sideset_enable_bit),
+    .sideset_enabled(sideset_enabled),
     .op(op),
     .op1(op1),
     .op2(op2),
