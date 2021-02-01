@@ -97,14 +97,14 @@ module tb();
       @(negedge clk);
       
       action = 4;
-      din = 32'h31323334;
+      din = 32'h30 + i;
 
       @(negedge clk);
 
       action = 0; 
 
       // Run for a while
-      repeat(100) @(posedge clk);
+      repeat(80) @(posedge clk);
     end
 
     $finish;

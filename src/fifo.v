@@ -5,7 +5,7 @@ module fifo (
   input             push,
   input             pull,
   input [31:0]      din,
-  output reg [31:0] dout,
+  output [31:0]     dout,
   output            empty,
   output            full
 );
@@ -20,14 +20,12 @@ module fifo (
       first <= 0;
       last <= 0;
       count = 0;
-      dout <= 0;
     end else begin
       if (push && !full) begin
         last <= last + 1;
         arr[last] <= din;
         count <= count + 1;
       end else if (pull && !empty) begin
-        dout <= arr[first];
         first <= first + 1;
         count <= count - 1;
       end
@@ -36,6 +34,7 @@ module fifo (
 
   assign empty = count == 0;
   assign full = count == 4;
+  assign dout = arr[first];
 
 endmodule
 

@@ -35,6 +35,7 @@ module pio (
   reg [2:0]   pins_side_count [0:3];
   reg [2:0]   sideset_bits    [0:3];
   reg [3:0]   sideset_enable_bit;
+  reg [3:0]   shift_dir = 4'b1111;
 
   reg [3:0]   push;
   reg [3:0]   pull;
@@ -126,6 +127,7 @@ module pio (
         .pin_directions(pin_directions[j]),
         .sideset_bits(sideset_bits[j]),
         .sideset_enable_bit(sideset_enable_bit[j]),
+        .shift_dir(shift_dir[j]),
         .div(div[j]),
         .instr(imm ? din[15:0] : instr[pc[j]]),
         .imm(imm),

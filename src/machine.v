@@ -53,6 +53,12 @@ module machine (
   reg         do_shift;
   reg         set_set_pins;
   reg         set_set_dirs;
+  reg         set_out_pins;
+  reg         set_out_dirs;
+  reg         set_side_pins;
+  reg         set_side_dirs;
+  reg         set_in_pins;
+  reg         set_in__dirs;
 
   reg         waiting;
   reg [31:0]  new_val;
@@ -135,6 +141,20 @@ module machine (
          if (pins_set_count > 1) pin_directions[pins_set_base+1] <= op2[1];
          if (pins_set_count > 0) pin_directions[pins_set_base+0] <= op2[0];
        end
+      if (set_set_pins) begin
+         if (pins_out_count > 4) output_pins[pins_out_base+4] <= op2[4];
+         if (pins_out_count > 3) output_pins[pins_out_base+3] <= op2[3];
+         if (pins_out_count > 2) output_pins[pins_out_base+2] <= op2[2];
+         if (pins_out_count > 1) output_pins[pins_out_base+1] <= op2[1];
+         if (pins_out_count > 0) output_pins[pins_out_base+0] <= op2[0];
+       end
+       if (set_set_dirs) begin
+         if (pins_out_count > 4) pin_directions[pins_out_base+4] <= op2[4];
+         if (pins_out_count > 3) pin_directions[pins_out_base+3] <= op2[3];
+         if (pins_out_count > 2) pin_directions[pins_out_base+2] <= op2[2];
+         if (pins_out_count > 1) pin_directions[pins_out_base+1] <= op2[1];
+         if (pins_out_count > 0) pin_directions[pins_out_base+0] <= op2[0];
+       end
     end
   end
   
@@ -154,6 +174,8 @@ module machine (
       new_val = 0;
       set_set_pins = 0;
       set_set_dirs = 0;
+      set_out_pins = 0;
+      set_out_dirs = 0;
       begin
         case (op)
           JMP:  begin
@@ -178,7 +200,7 @@ module machine (
                   1: begin new_val = in_shift; setx = 1; end
                 endcase
           OUT:  case (op1)
-                  0: begin end // Pins
+                  0: begin do_shift = 1; new_val = out_shift; set_out_pins = 1; end // Pins
                   1: begin do_shift = 1; new_val = out_shift; setx = 1; end // X
                   2: begin end // Y
                   4: begin end // Pindirs
