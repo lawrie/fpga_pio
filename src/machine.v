@@ -51,7 +51,8 @@ module machine (
   reg         decx;
   reg         decy;
   reg         set_shift;
-  reg         do_shift;
+  reg         do_in_shift;
+  reg         do_out_shift;
   reg         set_set_pins;
   reg         set_set_dirs;
   reg         set_out_pins;
@@ -59,7 +60,7 @@ module machine (
   reg         set_side_pins;
   reg         set_side_dirs;
   reg         set_in_pins;
-  reg         set_in__dirs;
+  reg         set_in_dirs;
 
   reg         waiting;
   reg [31:0]  new_val;
@@ -80,8 +81,9 @@ module machine (
   wire        sideset_enabled;
 
   wire pin0 = output_pins[0];
-  wire [1:0] irq_rel = op2[4] ? mindex + op2[1:0] : op2[1:0];
-  wire [2:0] irq_index = {op2[2], irq_rel};
+  wire [1:0]  irq_rel = op2[4] ? mindex + op2[1:0] : op2[1:0];
+  wire [2:0]  irq_index = {op2[2], irq_rel};
+  wire [31:0] null = 0;
 
   reg [4:0] delay_cnt = 0;
 
@@ -172,7 +174,8 @@ module machine (
       pull = 0;
       push = 0;
       set_shift = 0;
-      do_shift = 0;
+      do_in_shift = 0;
+      do_out_shift = 0;
       decx = 0;
       decy = 0;
       setx = 0;
@@ -183,6 +186,8 @@ module machine (
       set_set_dirs = 0;
       set_out_pins = 0;
       set_out_dirs = 0;
+      set_in_pins = 0;
+      set_in_dirs = 0;
       begin
         case (op)
           JMP:  begin
@@ -201,17 +206,20 @@ module machine (
 	  WAIT: case (op1[1:0])
                   0: waiting = gpio_pins[op2] != op1[2];
                   1: waiting = input_pins[op2] != op1[2];
-                  2: waiting = irq_flags_out[op2] != op1[2];
+                  2: waiting = irq_flags_out[irq_index] != op1[2];
                 endcase
           IN:   case (op1)
-                  1: begin new_val = in_shift; setx = 1; end
+                  0: begin do_in_shift = 1; new_val = input_pins; end
+                  1: begin do_in_shift = 1; new_val = x; end
+                  2: begin do_in_shift = 1; new_val = y; end
+                  3: begin do_in_shift = 1; new_val = null; end
                 endcase
           OUT:  case (op1)
-                  0: begin do_shift = 1; new_val = out_shift; set_out_pins = 1; end // Pins
-                  1: begin do_shift = 1; new_val = out_shift; setx = 1; end // X
-                  2: begin end // Y
-                  4: begin end // Pindirs
-                  5: begin end // PC
+                  0: begin do_out_shift = 1; new_val = out_shift; set_out_pins = 1; end // Pins
+                  1: begin do_out_shift = 1; new_val = out_shift; setx = 1; end // X
+                  2: begin do_out_shift = 1; new_val = out_shift; sety = 1; end // Y
+                  4: begin do_out_shift = 1; new_val = out_shift; set_out_dirs = 1; end // Pindirs
+                  5: begin do_out_shift = 1; new_val = pc;  jmp = 1; end // PC
                 endcase
           PUSH: if (!op1[2]) begin end                                                // Push
                 else begin pull = 1; set_shift = 1; waiting = op1[0] && empty; end // Pull
@@ -308,7 +316,8 @@ module machine (
     .stalled(delay_cnt > 0),
     .dir(shift_dir),
     .shift(op2),
-    .din(din),
+    .do_shift(do_in_shift),
+    .din(new_val),
     .dout(in_shift)
   );
 
@@ -320,7 +329,7 @@ module machine (
     .dir(shift_dir),
     .shift(op2),
     .set(set_shift),
-    .do_shift(do_shift),
+    .do_shift(do_out_shift),
     .din(din),
     .dout(out_shift)
   );
