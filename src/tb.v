@@ -104,7 +104,7 @@ module tb();
       action = 0; 
 
       // Run for a while
-      repeat(80) @(posedge clk);
+      repeat(100) @(posedge clk);
     end
 
     $finish;
