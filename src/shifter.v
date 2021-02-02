@@ -9,6 +9,7 @@ module shifter (
   input         dir,
   input         set,
   input         do_shift,
+  input [5:0]   bit_count,
   output [31:0] dout,
   output [5:0]  shift_count
 );
@@ -25,7 +26,7 @@ module shifter (
        if (set) begin
          if (dir) shift_reg <= {din, 32'b0}; // For right shift
          else shift_reg <= {32'b0, din};     // For left shift
-         count <= 0;
+         count <= bit_count;
        end else if (do_shift) begin
          shift_reg <= new_shift;
          count <= count + shift > 32 ? 32 : count + shift;
