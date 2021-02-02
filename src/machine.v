@@ -65,9 +65,13 @@ module machine (
   reg         set_side_dirs;
   reg         set_in_pins;
   reg         set_in_dirs;
+  reg         exec;
+  reg         exec1;
 
   reg         waiting;
   reg [31:0]  new_val;
+  reg [15:0]  exec_instr;
+  reg [15:0]  exec1_instr;
  
   // Divided clock enable signal 
   wire        penable;
@@ -131,8 +135,10 @@ module machine (
     if (reset || restart) 
       delay_cnt <= 0;
     if (en & penable) begin
+      exec1 <= exec;
+      exec1_instr <= exec_instr;
       if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
-      else if (!waiting) delay_cnt <= delay;
+      else if (!waiting && !exec) delay_cnt <= delay;
     end
   end
  
@@ -173,6 +179,7 @@ module machine (
       decy = 0;
       setx = 0;
       sety = 0;
+      exec = 0;
       waiting = 0;
       new_val = 0;
       bit_count = 0;
@@ -182,6 +189,7 @@ module machine (
       set_out_dirs = 0;
       set_in_pins = 0;
       set_in_dirs = 0;
+      exec_instr = 0;
       begin
         case (op)
           JMP:  begin
@@ -217,7 +225,7 @@ module machine (
                   4: begin do_out_shift = 1; new_val = out_shift; set_out_dirs = 1; end // Pindirs
                   5: begin do_out_shift = 1; new_val = out_shift; jmp = 1; end // PC
                   6: begin do_out_shift = 1; new_val = out_shift; bit_count = op2; set_shift_in = 1; end // ISR
-                  7: begin end //EXec TODO
+                  7: begin do_out_shift = 1; exec = 1; exec_instr = out_shift[15:0]; end //Exec
                 endcase
           PUSH: if (!op1[2]) begin end                                                 // Push TODO
                 else begin pull = 1; set_shift_out = 1; waiting = op1[0] && empty; end // Pull
@@ -229,7 +237,10 @@ module machine (
                   2: case (op2[2:0]) // Y
                        1: begin new_val = bit_op(x, op2[4:3]); sety = 1; end // X
                      endcase
-                  4: begin end // Exec
+                  4: case (op2[2:0]) // Exec
+                       1: begin exec = 1; exec_instr = bit_op(x, op2[4:3]); end
+                       2: begin exec = 1; exec_instr = bit_op(y, op2[4:3]); end
+                     endcase
                   5: case (op2[2:0]) // PC
                        1: begin new_val = bit_op(x, op2[4:3]); jmp = 1; end // X
                        2: begin new_val = bit_op(y, op2[4:3]); jmp = 1; end // Y
@@ -296,7 +307,7 @@ module machine (
   );
 
   decoder decode (
-    .instr(instr),
+    .instr(exec1 ? exec1_instr : instr),
     .sideset_bits(sideset_bits),
     .sideset_enable_bit(sideset_enable_bit),
     .sideset_enabled(sideset_enabled),
