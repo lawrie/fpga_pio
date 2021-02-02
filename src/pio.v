@@ -20,6 +20,8 @@ module pio (
   reg         wrap;
   reg [3:0]   en;
   reg [3:0]   jmp_pin;
+  reg [3:0]   auto_pull;
+  reg [3:0]   auto_push;
   reg         imm;
   
   reg [4:0]   pstart          [0:3];
@@ -34,6 +36,9 @@ module pio (
   reg [4:0]   pins_side_base  [0:3];
   reg [2:0]   pins_side_count [0:3];
   reg [2:0]   sideset_bits    [0:3];
+  reg  [31:0] initial_pins    [0:3];
+  reg  [31:0] initial_dirs    [0:3];
+
   reg [3:0]   sideset_enable_bit = 4'b1111;
   reg [3:0]   shift_dir = 4'b1111;
 
@@ -62,6 +67,8 @@ module pio (
     if (reset) begin
       en <= 0;
       jmp_pin <= 0;
+      auto_pull <= 0;
+      auto_push <= 0;
       for(i=0;i<4;i++) begin
         div[i] <= 0; // no clock divider
         pend[i] <= 0;
@@ -75,6 +82,8 @@ module pio (
         pins_side_count[i] <= 0;
         pins_side_base[i] <= 0;
         sideset_bits[i] <= 0;
+        initial_pins[i] <= 0;
+        initial_dirs[i] <= 0;
       end
     end else begin
      wrap <= 0;
@@ -105,7 +114,11 @@ module pio (
        7: div[mindex] <= din[23:0];         // Configure clock dividers
        8: sideset_bits[mindex] <= din[4:0]; // Configure side-set bits
        9: imm <= 1;                         // Immediate instruction
-      10: jmp_pin <= din[3:0];              // Configure jump pins
+      11: jmp_pin <= din[3:0];              // Configure jump pins
+      10: auto_push <= din[3:0];            // Configure auto_push
+      11: auto_pull <= din[3:0];            // Configure auto_pull
+      12: initial_pins[mindex] <= din[3:0]; // Configure initial output pin values
+      13: initial_dirs[mindex] <= din[3:0]; // Configure initial pin directions
      endcase
     end
   end
@@ -140,6 +153,10 @@ module pio (
         .pins_in_count(pins_in_count[j]),
         .pins_side_base(pins_side_base[j]),
         .pins_side_count(pins_side_count[j]),
+        .auto_pull(auto_pull[j]),
+        .auto_push(auto_push[j]),
+        .initial_pins(initial_pins[j]),
+        .initial_dirs(initial_dirs[j]),
         .pc(pc[j]),
         .din(mdin[j]),
         .dout(mdout[j]),
