@@ -137,6 +137,7 @@ module pio (
         .clk(clk),
         .reset(reset),
         .en(en[j]),
+        .restart(1'b0),
         .mindex(j[1:0]),
         .jmp_pin(jmp_pin[j]),
         .gpio_pins(gpio_in),

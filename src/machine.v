@@ -12,6 +12,7 @@ module machine (
   input         imm,
   input         empty,
   input         full,
+  input         restart,
 
   // Configuration
   input [1:0]   mindex,
@@ -127,6 +128,8 @@ module machine (
 
   // Count down if delay
   always @(posedge clk) begin
+    if (reset || restart) 
+      delay_cnt <= 0;
     if (en & penable) begin
       if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
       else if (!waiting) delay_cnt <= delay;
@@ -254,7 +257,7 @@ module machine (
 
   divider clk_divider (
     .clk(clk),
-    .reset(reset),
+    .reset(reset | restart),
     .div(div),
     .penable(penable)
   );
@@ -262,7 +265,7 @@ module machine (
   pc pc_reg (
     .clk(clk),
     .penable(en & penable),
-    .reset(reset),
+    .reset(reset | restart),
     .din(new_val[4:0]),
     .jmp(jmp),
     .stalled(waiting || imm || (delay >0 && delay_cnt != 1)),
@@ -273,7 +276,7 @@ module machine (
   scratch scratch_x (
     .clk(clk),
     .penable(en & penable),
-    .reset(reset),
+    .reset(reset | restart),
     .stalled(delay_cnt > 0),
     .din(new_val),
     .set(setx),
@@ -284,7 +287,7 @@ module machine (
   scratch scratch_y (
     .clk(clk),
     .penable(en & penable),
-    .reset(reset),
+    .reset(reset | restart),
     .stalled(delay_cnt > 0),
     .din(new_val),
     .set(sety),
@@ -307,7 +310,7 @@ module machine (
   shifter shift_in (
     .clk(clk),
     .penable(en & penable),
-    .reset(reset),
+    .reset(reset | restart),
     .stalled(delay_cnt > 0),
     .dir(shift_dir),
     .shift(op2),
@@ -322,7 +325,7 @@ module machine (
   shifter shift_out (
     .clk(clk),
     .penable(en & penable),
-    .reset(reset),
+    .reset(reset | restart),
     .stalled(delay_cnt > 0),
     .dir(shift_dir),
     .shift(op2),

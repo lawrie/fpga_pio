@@ -34,7 +34,7 @@ module shifter (
     end
   end
 
-  assign dout = dir ? (new_shift[31:0] >> (32 - shift))  : new_shift[63:32]; // TODO correct left shift
+  assign dout = dir ? (new_shift[31:0] >> (32 - shift))  : ((new_shift[63:32] << (32 - shift)) >> (32-shift));
   assign shift_count = count;
 
 endmodule
