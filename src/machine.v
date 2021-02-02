@@ -219,19 +219,19 @@ module machine (
                   7: begin do_in_shift = 1; new_val = out_shift; end
                 endcase
           OUT:  case (op1)
-                  0: begin do_out_shift = 1; new_val = out_shift; set_out_pins = 1; end // Pins
-                  1: begin do_out_shift = 1; new_val = out_shift; setx = 1; end // X
-                  2: begin do_out_shift = 1; new_val = out_shift; sety = 1; end // Y
-                  4: begin do_out_shift = 1; new_val = out_shift; set_out_dirs = 1; end // Pindirs
-                  5: begin do_out_shift = 1; new_val = out_shift; jmp = 1; end // PC
+                  0: begin do_out_shift = 1; new_val = out_shift; set_out_pins = 1; end                  // PINS
+                  1: begin do_out_shift = 1; new_val = out_shift; setx = 1; end                          // X
+                  2: begin do_out_shift = 1; new_val = out_shift; sety = 1; end                          // Y
+                  4: begin do_out_shift = 1; new_val = out_shift; set_out_dirs = 1; end                  // PINDIRS
+                  5: begin do_out_shift = 1; new_val = out_shift; jmp = 1; end                           // PC
                   6: begin do_out_shift = 1; new_val = out_shift; bit_count = op2; set_shift_in = 1; end // ISR
-                  7: begin do_out_shift = 1; exec = 1; exec_instr = out_shift[15:0]; end //Exec
+                  7: begin do_out_shift = 1; exec = 1; exec_instr = out_shift[15:0]; end                 // EXEC
                 endcase
-          PUSH: if (!op1[2]) begin end                                                 // Push TODO
-                else begin pull = 1; set_shift_out = 1; waiting = op1[0] && empty; end // Pull
+          PUSH: if (!op1[2]) begin push = 1; do_in_shift = 1;  waiting = op1[0] & full; end // PUSH
+                else begin pull = 1; set_shift_out = 1; waiting = op1[0] & empty; end       // PULL
           MOV:  case (op1)
-                  0: begin end // Pins
-                  1: case (op2[2:0]) // X
+                  0: begin end // PINS
+                  1: case (op2[2:0])                                                         // X
                        2: begin new_val = bit_op(y, op2[4:3]); setx = 1; end                 // Y
                        3: begin new_val = bit_op(null, op2[4:3]); setx = 1; end              // NULL
                        6: begin new_val = bit_op(in_shift, op2[4:3]); setx = 1; end          // ISR
@@ -243,7 +243,7 @@ module machine (
                        6: begin new_val = bit_op(in_shift, op2[4:3]); sety = 1; end          // ISR
                        6: begin new_val = bit_op(out_shift, op2[4:3]); sety = 1; end         // OSR
                      endcase
-                  4: case (op2[2:0]) // Exec
+                  4: case (op2[2:0]) // EXEC
                        1: begin exec = 1; exec_instr = bit_op(x, op2[4:3]); end              // X
                        2: begin exec = 1; exec_instr = bit_op(y, op2[4:3]); end              // Y
                        3: begin exec = 1; exec_instr = bit_op(null, op2[4:3]); end           // NULL
@@ -273,17 +273,17 @@ module machine (
                      endcase
                 endcase
           IRQ:  begin
-                  if (op1[1]) irq_flags_out[irq_index] = 0;
+                  if (op1[1]) irq_flags_out[irq_index] = 0;           // CLEAR
                   else begin
                     irq_flags_out[irq_index] = 1;
-                    waiting = op1[0] && irq_flags_in[irq_index] != 0;
+                    waiting = op1[0] && irq_flags_in[irq_index] != 0; // SET
                   end
                 end
           SET:  case (op1)
-                  0: set_set_pins = 1;
-                  1: begin setx = 1; new_val = {27'b0, op2}; end
-                  2: begin sety = 1; new_val = {27'b0, op2}; end
-                  4: set_set_dirs = 1;
+                  0: set_set_pins = 1;                           // PINS
+                  1: begin setx = 1; new_val = {27'b0, op2}; end // X
+                  2: begin sety = 1; new_val = {27'b0, op2}; end // Y
+                  4: set_set_dirs = 1;                           // PINDIRS
                 endcase
         endcase
       end
