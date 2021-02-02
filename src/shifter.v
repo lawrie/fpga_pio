@@ -15,7 +15,7 @@ module shifter (
 );
 
   reg [63:0] shift_reg;
-  reg [6:0]  count;
+  reg [5:0]  count;
   wire [63:0] new_shift = dir ? shift_reg >> shift : shift_reg << shift;
 
   always @(posedge clk) begin
