@@ -43,7 +43,7 @@ module machine (
   output [31:0] dout,
   output reg [31:0] output_pins,
   output reg [31:0] pin_directions,
-  output reg [7:0] irq_flags_out
+  output reg [7:0]  irq_flags_out
 );
 
   // Strobes to implement instructions 
@@ -122,51 +122,35 @@ module machine (
   localparam IRQ  = 6;
   localparam SET  = 7;
 
-  // Count down if delay, and set pins
+  // Count down if delay
   always @(posedge clk) begin
     if (en & penable) begin
       if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
       else if (!waiting) delay_cnt <= delay;
     end
   end
-  
-  always @(posedge clk)
+ 
+  integer i;
+
+  // Set output pins and pin directions 
+  always @(posedge clk) begin
     if (en & penable) begin
-      if (sideset_enabled) begin
-        if (pins_side_count > 4) output_pins[pins_side_base+4] <= side_set[4];
-        if (pins_side_count > 3) output_pins[pins_side_base+3] <= side_set[3];
-        if (pins_side_count > 2) output_pins[pins_side_base+2] <= side_set[2];
-        if (pins_side_count > 1) output_pins[pins_side_base+1] <= side_set[1];
-        if (pins_side_count > 0) output_pins[pins_side_base+0] <= side_set[0];
-      end
-      if (set_set_pins) begin
-         if (pins_set_count > 4) output_pins[pins_set_base+4] <= op2[4];
-         if (pins_set_count > 3) output_pins[pins_set_base+3] <= op2[3];
-         if (pins_set_count > 2) output_pins[pins_set_base+2] <= op2[2];
-         if (pins_set_count > 1) output_pins[pins_set_base+1] <= op2[1];
-         if (pins_set_count > 0) output_pins[pins_set_base+0] <= op2[0];
-       end
-       if (set_set_dirs) begin
-         if (pins_set_count > 4) pin_directions[pins_set_base+4] <= op2[4];
-         if (pins_set_count > 3) pin_directions[pins_set_base+3] <= op2[3];
-         if (pins_set_count > 2) pin_directions[pins_set_base+2] <= op2[2];
-         if (pins_set_count > 1) pin_directions[pins_set_base+1] <= op2[1];
-         if (pins_set_count > 0) pin_directions[pins_set_base+0] <= op2[0];
-       end
-       if (set_out_pins) begin
-         if (pins_out_count > 4) output_pins[pins_out_base+4] <= new_val[4];
-         if (pins_out_count > 3) output_pins[pins_out_base+3] <= new_val[3];
-         if (pins_out_count > 2) output_pins[pins_out_base+2] <= new_val[2];
-         if (pins_out_count > 1) output_pins[pins_out_base+1] <= new_val[1];
-         if (pins_out_count > 0) output_pins[pins_out_base+0] <= new_val[0];
-       end
-       if (set_out_dirs) begin
-         if (pins_out_count > 4) pin_directions[pins_out_base+4] <= op2[4];
-         if (pins_out_count > 3) pin_directions[pins_out_base+3] <= op2[3];
-         if (pins_out_count > 2) pin_directions[pins_out_base+2] <= op2[2];
-         if (pins_out_count > 1) pin_directions[pins_out_base+1] <= op2[1];
-         if (pins_out_count > 0) pin_directions[pins_out_base+0] <= op2[0];
-       end
+      if (sideset_enabled)
+        for (i=0;i<5;i++) 
+          if (pins_side_count > i) output_pins[pins_side_base+i] <= side_set[i];
+      if (set_set_pins)
+        for (i=0;i<5;i++) 
+          if (pins_set_count > i) output_pins[pins_set_base+i] <= op2[i];
+      if (set_set_dirs)
+        for (i=0;i<5;i++) 
+          if (pins_set_count > i) pin_directions[pins_set_base+i] <= op2[i];
+      if (set_out_pins)
+        for (i=0;i<5;i++) 
+          if (pins_out_count > i) output_pins[pins_out_base+i] <= new_val[i];
+      if (set_out_dirs)
+        for (i=0;i<5;i++) 
+          if (pins_out_count > i) pin_directions[pins_out_base+i] <= op2[i];
+    end
   end
   
   // Execute the current instruction
@@ -337,4 +321,4 @@ module machine (
   );
 
 endmodule
- 
+
