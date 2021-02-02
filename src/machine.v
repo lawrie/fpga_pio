@@ -52,7 +52,8 @@ module machine (
   reg         sety;
   reg         decx;
   reg         decy;
-  reg         set_shift;
+  reg         set_shift_in;
+  reg         set_shift_out;
   reg         do_in_shift;
   reg         do_out_shift;
   reg         set_set_pins;
@@ -86,8 +87,8 @@ module machine (
   wire [1:0]  irq_rel = op2[4] ? mindex + op2[1:0] : op2[1:0];
   wire [2:0]  irq_index = {op2[2], irq_rel};
   wire [31:0] null = 0;
-
-  reg [4:0] delay_cnt = 0;
+  wire [5:0]  isr_count, osr_count;
+  reg [4:0]   delay_cnt = 0;
 
   function [31:0] reverse (
     input [31:0] in
@@ -159,7 +160,8 @@ module machine (
       jmp  = 0;
       pull = 0;
       push = 0;
-      set_shift = 0;
+      set_shift_in = 0;
+      set_shift_out = 0;
       do_in_shift = 0;
       do_out_shift = 0;
       decx = 0;
@@ -186,7 +188,7 @@ module machine (
                     4: begin jmp = (y != 0); decy = 1; end
                     5: jmp = (x != y);
                     6: jmp = jmp_pin;
-                    7: jmp = (out_shift != 0);
+                    7: jmp = (osr_count != 32);
                   endcase
                 end
 	  WAIT: case (op1[1:0])
@@ -199,16 +201,20 @@ module machine (
                   1: begin do_in_shift = 1; new_val = x; end
                   2: begin do_in_shift = 1; new_val = y; end
                   3: begin do_in_shift = 1; new_val = null; end
+                  6: begin do_in_shift = 1; new_val = in_shift; end
+                  7: begin do_in_shift = 1; new_val = out_shift; end
                 endcase
           OUT:  case (op1)
                   0: begin do_out_shift = 1; new_val = out_shift; set_out_pins = 1; end // Pins
                   1: begin do_out_shift = 1; new_val = out_shift; setx = 1; end // X
                   2: begin do_out_shift = 1; new_val = out_shift; sety = 1; end // Y
                   4: begin do_out_shift = 1; new_val = out_shift; set_out_dirs = 1; end // Pindirs
-                  5: begin do_out_shift = 1; new_val = pc;  jmp = 1; end // PC
+                  5: begin do_out_shift = 1; new_val = out_shift; jmp = 1; end // PC
+                  6: begin do_out_shift = 1; new_val = out_shift; set_shift_in = 1; end // ISR, TODO set counter
+                  7: begin end //EXec TODO
                 endcase
-          PUSH: if (!op1[2]) begin end                                                // Push
-                else begin pull = 1; set_shift = 1; waiting = op1[0] && empty; end // Pull
+          PUSH: if (!op1[2]) begin end                                                 // Push TODO
+                else begin pull = 1; set_shift_out = 1; waiting = op1[0] && empty; end // Pull
           MOV:  case (op1)
                   0: begin end // Pins
                   1: case (op2[2:0]) // X
@@ -222,8 +228,8 @@ module machine (
                        1: begin new_val = bit_op(x, op2[4:3]); jmp = 1; end // X
                        2: begin new_val = bit_op(y, op2[4:3]); jmp = 1; end // Y
                      endcase
-                  6: begin end // ISR
-                  7: begin end // OSR
+                  6: begin end // ISR TODO
+                  7: begin end // OSR TODO
                 endcase
           IRQ:  begin
                   if (op1[1]) irq_flags_out[irq_index] = 0;
@@ -302,9 +308,11 @@ module machine (
     .stalled(delay_cnt > 0),
     .dir(shift_dir),
     .shift(op2),
+    .set(set_shift_in),
     .do_shift(do_in_shift),
     .din(new_val),
-    .dout(in_shift)
+    .dout(in_shift),
+    .shift_count(isr_count)
   );
 
   shifter shift_out (
@@ -314,10 +322,11 @@ module machine (
     .stalled(delay_cnt > 0),
     .dir(shift_dir),
     .shift(op2),
-    .set(set_shift),
+    .set(set_shift_out),
     .do_shift(do_out_shift),
     .din(din),
-    .dout(out_shift)
+    .dout(out_shift),
+    .shift_count(osr_count)
   );
 
 endmodule

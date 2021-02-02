@@ -10,7 +10,7 @@ module shifter (
   input         set,
   input         do_shift,
   output [31:0] dout,
-  output [6:0]  shift_count
+  output [5:0]  shift_count
 );
 
   reg [63:0] shift_reg;
@@ -20,7 +20,7 @@ module shifter (
   always @(posedge clk) begin
     if (reset) begin
       shift_reg <= 0;
-      count <= 0;
+      count <= 32;  // Empty
     end else if (penable && !stalled) begin
        if (set) begin
          if (dir) shift_reg <= {din, 32'b0}; // For right shift
