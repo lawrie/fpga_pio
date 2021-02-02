@@ -36,8 +36,10 @@ module pio (
   reg [4:0]   pins_side_base  [0:3];
   reg [2:0]   pins_side_count [0:3];
   reg [2:0]   sideset_bits    [0:3];
-  reg  [31:0] initial_pins    [0:3];
-  reg  [31:0] initial_dirs    [0:3];
+  reg [31:0]  initial_pins    [0:3];
+  reg [31:0]  initial_dirs    [0:3];
+  reg [4:0]   isr_threshold   [0:3];
+  reg [4:0]   osr_threshold   [0:3];
 
   reg [3:0]   sideset_enable_bit = 4'b1111;
   reg [3:0]   shift_dir = 4'b1111;
@@ -84,6 +86,8 @@ module pio (
         sideset_bits[i] <= 0;
         initial_pins[i] <= 0;
         initial_dirs[i] <= 0;
+        isr_threshold[i] <= 0;
+        osr_threshold[i] <= 0;
       end
     end else begin
      wrap <= 0;
@@ -117,8 +121,10 @@ module pio (
       11: jmp_pin <= din[3:0];              // Configure jump pins
       10: auto_push <= din[3:0];            // Configure auto_push
       11: auto_pull <= din[3:0];            // Configure auto_pull
-      12: initial_pins[mindex] <= din[3:0]; // Configure initial output pin values
-      13: initial_dirs[mindex] <= din[3:0]; // Configure initial pin directions
+      12: initial_pins[mindex] <= din;      // Configure initial output pin values
+      13: initial_dirs[mindex] <= din;      // Configure initial pin directions
+      14: isr_threshold[mindex] <= din[4:0]; // Configure auto_push threshold
+      15: osr_threshold[mindex] <= din[4:0]; // Configure auto_pull threshold
      endcase
     end
   end
@@ -157,6 +163,8 @@ module pio (
         .auto_push(auto_push[j]),
         .initial_pins(initial_pins[j]),
         .initial_dirs(initial_dirs[j]),
+        .isr_threshold(isr_threshold[j]),
+        .osr_threshold(osr_threshold[j]),
         .pc(pc[j]),
         .din(mdin[j]),
         .dout(mdout[j]),
