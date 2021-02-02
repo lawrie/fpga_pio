@@ -232,21 +232,45 @@ module machine (
           MOV:  case (op1)
                   0: begin end // Pins
                   1: case (op2[2:0]) // X
-                       2: begin new_val = bit_op(y, op2[4:3]); setx = 1; end // Y
+                       2: begin new_val = bit_op(y, op2[4:3]); setx = 1; end                 // Y
+                       3: begin new_val = bit_op(null, op2[4:3]); setx = 1; end              // NULL
+                       6: begin new_val = bit_op(in_shift, op2[4:3]); setx = 1; end          // ISR
+                       7: begin new_val = bit_op(out_shift, op2[4:3]); setx = 1; end         // OSR
                      endcase
                   2: case (op2[2:0]) // Y
-                       1: begin new_val = bit_op(x, op2[4:3]); sety = 1; end // X
+                       1: begin new_val = bit_op(x, op2[4:3]); sety = 1; end                 // X
+                       3: begin new_val = bit_op(null, op2[4:3]); sety = 1; end              // NULL
+                       6: begin new_val = bit_op(in_shift, op2[4:3]); sety = 1; end          // ISR
+                       6: begin new_val = bit_op(out_shift, op2[4:3]); sety = 1; end         // OSR
                      endcase
                   4: case (op2[2:0]) // Exec
-                       1: begin exec = 1; exec_instr = bit_op(x, op2[4:3]); end
-                       2: begin exec = 1; exec_instr = bit_op(y, op2[4:3]); end
+                       1: begin exec = 1; exec_instr = bit_op(x, op2[4:3]); end              // X
+                       2: begin exec = 1; exec_instr = bit_op(y, op2[4:3]); end              // Y
+                       3: begin exec = 1; exec_instr = bit_op(null, op2[4:3]); end           // NULL
+                       6: begin exec = 1; exec_instr = bit_op(in_shift, op2[4:3]); end       // ISR
+                       7: begin exec = 1; exec_instr = bit_op(out_shift, op2[4:3]); end      // OSR
                      endcase
                   5: case (op2[2:0]) // PC
-                       1: begin new_val = bit_op(x, op2[4:3]); jmp = 1; end // X
-                       2: begin new_val = bit_op(y, op2[4:3]); jmp = 1; end // Y
+                       1: begin new_val = bit_op(x, op2[4:3]); jmp = 1; end                   // X
+                       2: begin new_val = bit_op(y, op2[4:3]); jmp = 1; end                   // Y
+                       3: begin new_val = bit_op(null, op2[4:3]); jmp = 1; end                // NULL
+                       6: begin new_val = bit_op(in_shift, op2[4:3]); jmp = 1; end            // ISR
+                       7: begin new_val = bit_op(out_shift, op2[4:3]); jmp = 1; end           // OSR
                      endcase
-                  6: begin end // ISR TODO
-                  7: begin end // OSR TODO
+                  6: case (op2[2:0]) // ISR
+                       1: begin new_val = bit_op(x, op2[4:3]); set_shift_in = 1; end          // X
+                       2: begin new_val = bit_op(y, op2[4:3]); set_shift_in = 1; end          // Y
+                       3: begin new_val = bit_op(null, op2[4:3]); set_shift_in = 1; end       // NULL
+                       6: begin new_val = bit_op(in_shift, op2[4:3]); set_shift_in = 1; end   // ISR
+                       7: begin new_val = bit_op(out_shift, op2[4:3]); set_shift_in = 1; end  // OSR
+                     endcase
+                  7: case (op2[2:0]) // OSR
+                       1: begin new_val = bit_op(x, op2[4:3]); set_shift_out = 1; end         // X
+                       2: begin new_val = bit_op(y, op2[4:3]); set_shift_out = 1; end         // Y
+                       3: begin new_val = bit_op(null, op2[4:3]); set_shift_out = 1; end      // NULL
+                       6: begin new_val = bit_op(in_shift, op2[4:3]); set_shift_out = 1; end  // ISR
+                       7: begin new_val = bit_op(out_shift, op2[4:3]); set_shift_out = 1; end // OSR
+                     endcase
                 endcase
           IRQ:  begin
                   if (op1[1]) irq_flags_out[irq_index] = 0;
