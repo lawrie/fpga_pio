@@ -116,6 +116,7 @@ module machine (
       0: bit_op = in;
       1: bit_op = ~in;
       2: bit_op = reverse(in);
+      3: bit_op = in;
     endcase
   endfunction
 
@@ -134,7 +135,7 @@ module machine (
   always @(posedge clk) begin
     if (reset || restart) 
       delay_cnt <= 0;
-    if (en & penable) begin
+    else if (en & penable) begin
       exec1 <= exec;
       exec1_instr <= exec_instr;
       if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
