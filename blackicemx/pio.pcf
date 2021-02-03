@@ -5,5 +5,5 @@ set_io led[0] 52
 set_io led[1] 55
 set_io led[2] 56
 
-
+set_io gn[0] 26
 

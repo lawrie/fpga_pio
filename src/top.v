@@ -4,7 +4,8 @@ module top (
   // Buttons
   input [6:0]   btn,
   // Leds
-  output [7:0]  led
+  output [7:0]  led,
+  output [27:0] gn
 );
 
   reg [31:0]  din;
@@ -43,7 +44,7 @@ module top (
   reg [35:0] conf [0:31];
   initial begin
     conf[0] = 36'h200000003; // Set wrap
-    conf[1] = 36'h700000280; // Set divider 2.5
+    conf[1] = 36'h700ffff00; // Set divider
     conf[2] = 36'h500000001; // Set pin groups
     conf[3] = 36'h800000000; // Set sideset bits
     conf[4] = 36'h600000001; // Enable machine
@@ -106,6 +107,7 @@ module top (
   );
 
   assign led = {reset, gpio_out[0]};
+  assign gn[0] = gpio_out[0];
 
 endmodule
 
