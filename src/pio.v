@@ -41,7 +41,7 @@ module pio (
   reg [4:0]   isr_threshold   [0:3];
   reg [4:0]   osr_threshold   [0:3];
 
-  reg [3:0]   sideset_enable_bit = 4'b1111;
+  reg [3:0]   sideset_enable_bit;
   reg [3:0]   shift_dir = 4'b1111;
 
   reg [3:0]   push;
@@ -147,7 +147,7 @@ module pio (
         .output_pins(output_pins[j]),
         .pin_directions(pin_directions[j]),
         .sideset_bits(sideset_bits[j]),
-        .sideset_enable_bit(sideset_enable_bit[j]),
+        .sideset_enable_bit(sideset_bits[j] > 0), // TODO Configure this
         .shift_dir(shift_dir[j]),
         .div(div[j]),
         .instr(imm ? din[15:0] : instr[pc[j]]),
