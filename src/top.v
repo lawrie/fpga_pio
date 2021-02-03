@@ -40,19 +40,20 @@ module top (
 
   wire [5:0]  plen = 4; // Program length
 
-  reg [35:0] config [0:31];
+  reg [35:0] conf [0:31];
   initial begin
-    config[0] = 36'h200000003; // Set wrap
-    config[1] = 36'h700000280; // Set divider 2.5
-    config[2] = 36'h500000001; // Set pin groups
-    config[3] = 36'h800000000; // Set sideset bits
-    config[4] = 36'h600000001; // Enable machine
+    conf[0] = 36'h200000003; // Set wrap
+    conf[1] = 36'h700000280; // Set divider 2.5
+    conf[2] = 36'h500000001; // Set pin groups
+    conf[3] = 36'h800000000; // Set sideset bits
+    conf[4] = 36'h600000001; // Enable machine
   end
 
-  wire [5:0] clen = 5; // Config length
+  wire [5:0] clen = 6; // Config length
 
   reg [1:0] state;
   reg [4:0] cindex;
+  reg [4:0] pindex;
 
   // State machine to send program to PIO and configure PIO state machines
   always @(posedge clk_25mhz) begin
@@ -64,29 +65,26 @@ module top (
       gpio_in <= 0;
       state <= 0;
       cindex <= 0;
+      pindex <= 0;
     end else begin
       case (state)
         0: begin // Send program to pio
              action <= 1;
-             din <= program[index];
-             index <= index + 1;
-             if (index == plen - 1) begin
+             din <= program[pindex];
+             pindex <= pindex + 1;
+             index <= pindex;
+             if (pindex == plen - 1)
                state <= 1;
-               action <= 0;
-               cindex <= 0;
-             end
            end
         1: begin // Do configuration
-             action <= config[cindex][35:32];
-             din <= config[cindex][31:0];
-             mindex <= 0;
+             action <= conf[cindex][35:32];
+             din <= conf[cindex][31:0];
              cindex <= cindex + 1;
-             if (cindex == clen - 1) begin
+             if (cindex == clen - 1)
                state <= 2;
-               action <= 0;
-             end
            end
         2: begin // Run state
+             action <= 0;
            end
       endcase
     end
