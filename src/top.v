@@ -14,7 +14,7 @@ module top (
   reg [31:0]  gpio_in;
 
   wire [31:0] gpio_out;
-  wire[31:0]  gpio_dir;
+  wire [31:0] gpio_dir;
   wire [31:0] dout;
   wire        irq0, irq1;
 
@@ -52,7 +52,6 @@ module top (
   wire [5:0] clen = 5; // Config length
 
   reg [1:0] state;
-  reg [4:0] pindex;
   reg [4:0] cindex;
 
   // State machine to send program to PIO and configure PIO state machines
@@ -64,17 +63,17 @@ module top (
       mindex <= 0;
       gpio_in <= 0;
       state <= 0;
-      pindex <= 0;
       cindex <= 0;
     end else begin
       case (state)
         0: begin // Send program to pio
              action <= 1;
-             din <= program[pindex];
-             pindex <= pindex + 1;
-             if (pindex == plen - 1) begin
+             din <= program[index];
+             index <= index + 1;
+             if (index == plen - 1) begin
                state <= 1;
                action <= 0;
+               cindex <= 0;
              end
            end
         1: begin // Do configuration
@@ -108,7 +107,7 @@ module top (
     .irq1(irq1)
   );
 
-  assign led = {state, gpio_out[0], reset};
+  assign led = {reset, gpio_out[0]};
 
 endmodule
 

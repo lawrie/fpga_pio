@@ -99,7 +99,7 @@ module pio (
      case (action)
        1: instr[index] <= din[15:0];        // Set an instruction
        2: begin                             // Configure pend
-            pend[mindex] <= index; 
+            pend[mindex] <= din[4:0]; 
           end 
        3: begin                             // Pull vsalue from fifo 
             pull[mindex] <= 1; 

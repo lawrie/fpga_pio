@@ -58,7 +58,7 @@ module tb();
     // Set wrap for machine 1
     mindex = 0;
     action = 2;
-    index = plen - 1;
+    din = plen - 1;
 
     repeat(2) @(posedge clk);
 
