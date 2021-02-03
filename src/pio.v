@@ -52,12 +52,14 @@ module pio (
 
   wire [3:0]  mpush;
   wire [3:0]  mpull;
-  wire [31:0] output_pins [0:3];
+
+  wire [31:0] output_pins    [0:3];
   wire [31:0] pin_directions [0:3];
-  wire [4:0]  pc [0:3];
-  wire [31:0] mdin [0:3];
-  wire [31:0] mdout [0:3];
-  wire [31:0] pdout [0:3];
+  wire [4:0]  pc             [0:3];
+  wire [31:0] mdin           [0:3];
+  wire [31:0] mdout          [0:3];
+  wire [31:0] pdout          [0:3];
+  wire [7:0]  irq_flags_out  [0:3];
 
   assign gpio_out = output_pins[0]; // TODO: Combine outputs from machines
   assign gpio_dir = pin_directions[0];
@@ -151,7 +153,7 @@ module pio (
         .instr(imm ? din[15:0] : instr[pc[j]]),
         .imm(imm),
         .pstart(pstart[j]),
-        .pend(pend[0]),
+        .pend(pend[j]),
         .pins_out_base(pins_out_base[j]),
         .pins_out_count(pins_out_count[j]),
         .pins_set_base(pins_set_base[j]),
@@ -166,6 +168,8 @@ module pio (
         .initial_dirs(initial_dirs[j]),
         .isr_threshold(isr_threshold[j]),
         .osr_threshold(osr_threshold[j]),
+        .irq_flags_in(8'h0),
+        .irq_flags_out(irq_flags_out[j]),
         .pc(pc[j]),
         .din(mdin[j]),
         .dout(mdout[j]),

@@ -190,6 +190,7 @@ module machine (
       set_in_pins = 0;
       set_in_dirs = 0;
       exec_instr = 0;
+      irq_flags_out = 0;
       begin
         case (op)
           JMP:  begin
