@@ -344,12 +344,11 @@ module machine (
     .side_set(side_set)
   );
 
-  shifter shift_in (
+  isr shift_in (
     .clk(clk),
     .penable(en & penable),
     .reset(reset | restart),
     .stalled(delay_cnt > 0),
-    .dir(shift_dir),
     .shift(op2),
     .set(set_shift_in),
     .do_shift(do_in_shift),
@@ -359,7 +358,7 @@ module machine (
     .shift_count(isr_count)
   );
 
-  shifter shift_out (
+  osr shift_out (
     .clk(clk),
     .penable(en & penable),
     .reset(reset | restart),
@@ -370,7 +369,6 @@ module machine (
     .do_shift(do_out_shift),
     .din(din),
     .dout(out_shift),
-    .bit_count(6'b0),
     .shift_count(osr_count)
   );
 
