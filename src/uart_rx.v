@@ -80,6 +80,18 @@ module tb();
 
     repeat(2) @(posedge clk);
 
+    // isr threshold
+    action = 14;
+    din = 8;
+
+    repeat(2) @(posedge clk);
+
+    // autopush
+    action = 10;
+    din = 1;
+
+    repeat(2) @(posedge clk);
+
     // Set input pin high
     gpio_in[0] = 1;
 
@@ -107,6 +119,15 @@ module tb();
 
     repeat(80) @(posedge clk);
 
+    // pull  
+    @(negedge clk);
+    action = 3;
+
+    @(negedge clk);
+    
+    action = 0;
+
+    
     $finish;
   end
 
