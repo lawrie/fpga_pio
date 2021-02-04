@@ -16,6 +16,7 @@ module isr (
   reg [31:0] shift_reg;
   reg [5:0]  count;
   wire [5:0] shift_val = shift == 0 ? 32 : shift;
+  wire [63:0] next_val = {shift_reg, din << (32 - shift_val)} << shift_val;
 
   always @(posedge clk) begin
     if (reset) begin
@@ -26,7 +27,7 @@ module isr (
          shift_reg <= din;
          count <= bit_count;
        end else if (do_shift) begin
-         shift_reg <= shift_reg << shift_val;
+         shift_reg <= next_val[63:32];
          count <= count + shift_val > 32 ? 32 : count + shift_val;
        end
     end

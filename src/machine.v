@@ -89,6 +89,7 @@ module machine (
   wire        sideset_enabled;
 
   wire pin0 = output_pins[0];
+  wire in_pin0 = input_pins[0];
   wire [1:0]  irq_rel = op2[4] ? mindex + op2[1:0] : op2[1:0];
   wire [2:0]  irq_index = {op2[2], irq_rel};
   wire [31:0] null = 0;
