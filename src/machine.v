@@ -41,7 +41,7 @@ module machine (
   output [4:0]  pc,
   output reg    push, // Send data to output FIFO
   output reg    pull, // Get data from input FIFO
-  output [31:0] dout,
+  output reg [31:0] dout,
   output reg [31:0] output_pins,
   output reg [31:0] pin_directions,
   output reg [7:0]  irq_flags_out
@@ -193,7 +193,16 @@ module machine (
       set_in_dirs = 0;
       exec_instr = 0;
       irq_flags_out = 0;
+      dout = 0;
       begin
+        // Auto push and auto pull
+        if (auto_push && isr_count >= isr_threshold) begin
+          push = 1; dout = in_shift; new_val = 0; bit_count = 0; set_shift_in = 1; waiting = full;
+        end
+        if (auto_pull && osr_count >= osr_threshold) begin
+          pull = 0; new_val = din; set_shift_out = 1; waiting = empty;
+        end
+        // Execute current instruction
         case (op)
           JMP:  begin
                   new_val[4:0] = op2; 
@@ -230,8 +239,17 @@ module machine (
                   6: begin do_out_shift = 1; new_val = out_shift; bit_count = op2; set_shift_in = 1; end // ISR
                   7: begin do_out_shift = 1; exec = 1; exec_instr = out_shift[15:0]; end                 // EXEC
                 endcase
-          PUSH: if (!op1[2]) begin push = 1; do_in_shift = 1;  waiting = op1[0] & full; end // PUSH
-                else begin pull = 1; set_shift_out = 1; waiting = op1[0] & empty; end       // PULL
+          PUSH: if (!op1[2]) begin // PUSH
+                  push = 1; 
+                  dout = in_shift; 
+                  set_shift_in = 1;  
+                  new_val = 0;
+                  waiting = op1[0] & full;
+                end else begin //PULL 
+                  pull = 1; 
+                  set_shift_out = 1; 
+                  waiting = op1[0] & empty; 
+                end
           MOV:  case (op1)
                   0: begin end // PINS
                   1: case (op2[2:0])                                                         // X

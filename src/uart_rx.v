@@ -95,15 +95,17 @@ module tb();
     // Run for a while
     repeat(2) @(posedge clk);
 
+    // start bit
     gpio_in[0] = 0;
 
     for(i=0;i<10;i=i+1) begin
       @(posedge clk);
     end
 
+    // data
     gpio_in[0] = 1;
 
-    repeat(100) @(posedge clk);
+    repeat(80) @(posedge clk);
 
     $finish;
   end
