@@ -16,7 +16,8 @@ module shifter (
 
   reg [63:0] shift_reg;
   reg [5:0]  count;
-  wire [63:0] new_shift = dir ? shift_reg >> shift : shift_reg << shift;
+  wire [5:0] shift_val = shift == 0 ? 32 : shift;
+  wire [63:0] new_shift = dir ? shift_reg >> shift_val : shift_reg << shift_val;
 
   always @(posedge clk) begin
     if (reset) begin
@@ -29,12 +30,13 @@ module shifter (
          count <= bit_count;
        end else if (do_shift) begin
          shift_reg <= new_shift;
-         count <= count + shift > 32 ? 32 : count + shift;
+         count <= count + shift_val > 32 ? 32 : count + shift_val;
        end
     end
   end
 
-  assign dout = dir ? (new_shift[31:0] >> (32 - shift))  : ((new_shift[63:32] << (32 - shift)) >> (32-shift));
+  assign dout = dir ? (new_shift[31:0] >> (32 - shift_val)) 
+                    : ((new_shift[63:32] << (32 - shift_val)) >> (32-shift_val));
   assign shift_count = count;
 
 endmodule
