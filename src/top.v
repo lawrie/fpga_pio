@@ -48,8 +48,6 @@ module top (
   //  program[11] = 16'b000_00000_000_00001; // jmp 1
   //end
 
-  wire [5:0]  plen = 12; // Program length
-
   reg [35:0] conf [0:31];
   initial begin
     conf[0] = 36'h20000000c; // Set wrap
@@ -83,7 +81,7 @@ module top (
              din <= program[pindex];
              pindex <= pindex + 1;
              index <= pindex;
-             if (pindex == plen - 1)
+             if (pindex == 31)
                state <= 1;
            end
         1: begin // Do configuration
