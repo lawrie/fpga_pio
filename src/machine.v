@@ -47,7 +47,7 @@ module machine (
   output reg [7:0]  irq_flags_out
 );
 
-  // Strobes to implement instructions 
+  // Strobes to implement instructions (cominatorial)
   reg         jmp;
   reg         setx;
   reg         sety;
@@ -67,8 +67,8 @@ module machine (
   reg         set_in_dirs;
   reg         exec;
   reg         exec1;
-
   reg         waiting;
+
   reg [31:0]  new_val;
   reg [15:0]  exec_instr;
   reg [15:0]  exec1_instr;
@@ -90,16 +90,20 @@ module machine (
   wire [4:0]  side_set;
   wire        sideset_enabled;
 
-  wire pin0 = output_pins[0];
-  wire in_pin0 = input_pins[0];
+  // Miscellaneous signals
   wire [1:0]  irq_rel = op2[4] ? mindex + op2[1:0] : op2[1:0];
   wire [2:0]  irq_index = {op2[2], irq_rel};
-  wire [31:0] null = 0;
+  wire [31:0] null = 0; // NULL source
   wire [5:0]  isr_count, osr_count;
+
+  // Values for use in gtkwave during simulation
+  wire        pin0 = output_pins[0];
+  wire        in_pin0 = input_pins[0];
 
   reg [4:0]   delay_cnt = 0;
   reg [5:0]   bit_count;
 
+  // Function to reverse the order of bits in a word
   function [31:0] reverse (
     input [31:0] in
   );
@@ -110,6 +114,7 @@ module machine (
     end
   endfunction
 
+  // Function to apply selected bit operation to a word
   function [31:0] bit_op (
     input [31:0] in,
     input [1:0] op
@@ -134,6 +139,7 @@ module machine (
   localparam IRQ  = 6;
   localparam SET  = 7;
 
+  // Supports detection of penable positive clock edge
   always @(posedge clk) old_penable <= penable;
 
   // Count down if delay
@@ -152,7 +158,7 @@ module machine (
 
   // Set output pins and pin directions 
   always @(posedge clk) begin
-    if (en & penable_edge) begin
+    if (en & penable_edge) begin // TODO Set mask to allow multiplex of results from multiple machines
       if (sideset_enabled)
         for (i=0;i<5;i++) 
           if (pins_side_count > i) output_pins[pins_side_base+i] <= side_set[i];
@@ -221,12 +227,12 @@ module machine (
                     7: jmp = (osr_count < osr_threshold);
                   endcase
                 end
-	  WAIT: case (op1[1:0])
+	  WAIT: case (op1[1:0]) // Source
                   0: waiting = gpio_pins[op2] != op1[2];
                   1: waiting = input_pins[op2] != op1[2];
                   2: waiting = irq_flags_out[irq_index] != op1[2];
                 endcase
-          IN:   case (op1)
+          IN:   case (op1) // Source
                   0: begin do_in_shift = 1; new_val = input_pins; end
                   1: begin do_in_shift = 1; new_val = x; end
                   2: begin do_in_shift = 1; new_val = y; end
@@ -234,7 +240,7 @@ module machine (
                   6: begin do_in_shift = 1; new_val = in_shift; end
                   7: begin do_in_shift = 1; new_val = out_shift; end
                 endcase
-          OUT:  case (op1)
+          OUT:  case (op1) // Destination
                   0: begin do_out_shift = 1; new_val = out_shift; set_out_pins = 1; end                  // PINS
                   1: begin do_out_shift = 1; new_val = out_shift; setx = 1; end                          // X
                   2: begin do_out_shift = 1; new_val = out_shift; sety = 1; end                          // Y
@@ -243,7 +249,7 @@ module machine (
                   6: begin do_out_shift = 1; new_val = out_shift; bit_count = op2; set_shift_in = 1; end // ISR
                   7: begin do_out_shift = 1; exec = 1; exec_instr = out_shift[15:0]; end                 // EXEC
                 endcase
-          PUSH: if (!op1[2]) begin // PUSH
+          PUSH: if (!op1[2]) begin // PUSH TODO Push IfFull
                   push = 1; 
                   dout = in_shift; 
                   set_shift_in = 1;  
@@ -275,9 +281,9 @@ module machine (
                     end
                   end
                 end
-          MOV:  case (op1)  // Destination
+          MOV:  case (op1)  // Destination TODO Status source and pins
                   0: begin end // PINS
-                  1: case (op2[2:0])                                                         // X
+                  1: case (op2[2:0]) // X                                                    // X
                        2: begin new_val = bit_op(y, op2[4:3]); setx = 1; end                 // Y
                        3: begin new_val = bit_op(null, op2[4:3]); setx = 1; end              // NULL
                        6: begin new_val = bit_op(in_shift, op2[4:3]); setx = 1; end          // ISR
@@ -325,7 +331,7 @@ module machine (
                     waiting = op1[0] && irq_flags_in[irq_index] != 0; // SET
                   end
                 end
-          SET:  case (op1)
+          SET:  case (op1) // Destination
                   0: set_set_pins = 1;                           // PINS
                   1: begin setx = 1; new_val = {27'b0, op2}; end // X
                   2: begin sety = 1; new_val = {27'b0, op2}; end // Y
@@ -336,6 +342,7 @@ module machine (
     end
   end
 
+  // Clock divider
   divider clk_divider (
     .clk(clk),
     .reset(reset | restart),
@@ -343,39 +350,7 @@ module machine (
     .penable(penable)
   );
 
-  pc pc_reg (
-    .clk(clk),
-    .penable(en & penable_edge),
-    .reset(reset | restart),
-    .din(new_val[4:0]),
-    .jmp(jmp),
-    .stalled(waiting || imm || (delay >0 && delay_cnt != 1)),
-    .pend(pend),
-    .dout(pc)
-  );
-
-  scratch scratch_x (
-    .clk(clk),
-    .penable(en & penable_edge),
-    .reset(reset | restart),
-    .stalled(delay >0 && delay_cnt != 1),
-    .din(new_val),
-    .set(setx),
-    .dec(decx),
-    .dout(x)
-  );
-
-  scratch scratch_y (
-    .clk(clk),
-    .penable(en & penable_edge),
-    .reset(reset | restart),
-    .stalled(delay >0 && delay_cnt != 1),
-    .din(new_val),
-    .set(sety),
-    .dec(decy),
-    .dout(y)
-  );
-
+  // Instruction decoder
   decoder decode (
     .instr(exec1 ? exec1_instr : instr),
     .sideset_bits(sideset_bits),
@@ -388,6 +363,44 @@ module machine (
     .side_set(side_set)
   );
 
+  // Synchronous modules
+  // PC
+  pc pc_reg (
+    .clk(clk),
+    .penable(en & penable_edge),
+    .reset(reset | restart),
+    .din(new_val[4:0]),
+    .jmp(jmp),
+    .stalled(waiting || imm || (delay >0 && delay_cnt != 1)),
+    .pend(pend),
+    .dout(pc)
+  );
+
+  // X
+  scratch scratch_x (
+    .clk(clk),
+    .penable(en & penable_edge),
+    .reset(reset | restart),
+    .stalled(delay >0 && delay_cnt != 1),
+    .din(new_val),
+    .set(setx),
+    .dec(decx),
+    .dout(x)
+  );
+
+  // Y
+  scratch scratch_y (
+    .clk(clk),
+    .penable(en & penable_edge),
+    .reset(reset | restart),
+    .stalled(delay >0 && delay_cnt != 1),
+    .din(new_val),
+    .set(sety),
+    .dec(decy),
+    .dout(y)
+  );
+
+  // ISR
   isr shift_in (
     .clk(clk),
     .penable(en & penable_edge),
@@ -402,6 +415,7 @@ module machine (
     .shift_count(isr_count)
   );
 
+  // OSR
   osr shift_out (
     .clk(clk),
     .penable(en & penable_edge),
