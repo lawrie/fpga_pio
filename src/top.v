@@ -8,62 +8,42 @@ module top (
   output [27:0] gn
 );
 
-  reg [31:0]  din;
-  reg [4:0]   index;
-  reg [3:0]   action;
-  reg [1:0]   mindex;
-  reg [31:0]  gpio_in;
+  // PIO registers and wires
+  reg [31:0]  din;        // Data sent to PIO
+  reg [4:0]   index;      // Instruction index
+  reg [3:0]   action;     // Action to be done by PIO
+  reg [1:0]   mindex;     // Machine index
+  reg [31:0]  gpio_in;    // Input pins to PIO
 
-  wire [31:0] gpio_out;
-  wire [31:0] gpio_dir;
-  wire [31:0] dout;
-  wire        irq0, irq1;
+  wire [31:0] gpio_out;   // Output pins from PIO
+  wire [31:0] gpio_dir;   // Pin directions
+  wire [31:0] dout;       // Output from PIO
+  wire        irq0, irq1; // IRQ flags from PIO
 
+  // Power-on reset
   reg [15:0] pwr_up_reset_counter = 0;
-  wire      pwr_up_reset_n = &pwr_up_reset_counter;
-  wire      n_reset = pwr_up_reset_n & btn[0];
-  wire      reset = ~n_reset;
+  wire       pwr_up_reset_n = &pwr_up_reset_counter;
+  wire       n_reset = pwr_up_reset_n & btn[0];
+  wire       reset = ~n_reset;
 
   always @(posedge clk_25mhz) begin
     if (!pwr_up_reset_n)
       pwr_up_reset_counter <= pwr_up_reset_counter + 1;
   end
 
-  // Configuration
+  // Configuration of state machines and program instructions
   reg [15:0] program [0:31];
   initial $readmemh("test.mem", program);
 
-  //initial begin // square
-  //  program[0] = 16'b111_00000_100_00001; // set pindirs 1
-  //  program[1] = 16'b111_11111_000_00001; // set pins 1 [31]
-  //  program[2] = 16'b101_11111_010_00010; // nop [31]
-  //  program[3] = 16'b101_11111_010_00010; // nop [31]
-  //  program[4] = 16'b101_11111_010_00010; // nop [31]
-  //  program[5] = 16'b101_11111_010_00010; // nop [31]
-  //  program[6] = 16'b111_11110_000_00000; // set pins 0 [30] 
-  //  program[7] = 16'b101_11111_010_00010; // nop [31]
-  //  program[8] = 16'b101_11111_010_00010; // nop [31]
-  //  program[9] = 16'b101_11111_010_00010; // nop [31]
-  //  program[10] = 16'b101_11111_010_00010; // nop [31]
-  //  program[11] = 16'b000_00000_000_00001; // jmp 1
-  //end
-
   reg [35:0] conf [0:31];
-  initial begin
-    conf[0] = 36'h20000000c; // Set wrap
-    conf[1] = 36'h700ffff00; // Set divider
-    conf[2] = 36'h500000001; // Set pin groups
-    conf[3] = 36'h800000000; // Set sideset bits
-    conf[4] = 36'h600000001; // Enable machine
-  end
-
   wire [5:0] clen = 5; // Config length
+  initial $readmemh("conf.mem", conf);
 
+  // State machine to send program to PIO and configure PIO state machines
   reg [1:0] state;
   reg [4:0] cindex;
   reg [4:0] pindex;
 
-  // State machine to send program to PIO and configure PIO state machines
   always @(posedge clk_25mhz) begin
     if (reset) begin
       din <= 0;
@@ -98,6 +78,7 @@ module top (
     end
   end
 
+  // PIO instance 1
   pio pio_1 (
     .clk(clk_25mhz),
     .reset(reset),
@@ -113,6 +94,7 @@ module top (
     .irq1(irq1)
   );
 
+  // Led and gpio outpuy
   assign led = {reset, gpio_out[0]};
   assign gn[0] = gpio_out[0];
 
