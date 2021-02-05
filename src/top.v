@@ -19,7 +19,7 @@ module top (
   wire [31:0] dout;
   wire        irq0, irq1;
 
-  reg [7:0] pwr_up_reset_counter = 0;
+  reg [15:0] pwr_up_reset_counter = 0;
   wire      pwr_up_reset_n = &pwr_up_reset_counter;
   wire      n_reset = pwr_up_reset_n & btn[0];
   wire      reset = ~n_reset;
