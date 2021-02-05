@@ -1,4 +1,5 @@
 bin/
+__pycache__/
 tb
 *.vcd
 

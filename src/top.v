@@ -31,26 +31,21 @@ module top (
 
   // Configuration
   reg [15:0] program [0:31];
-  initial begin // square
-    program[0] = 16'b111_00000_100_00001; // set pindirs 1
-    program[1] = 16'b111_11111_000_00001; // set pins 1 [31]
-    program[2] = 16'b101_11111_010_00010; // nop [31]
-    program[3] = 16'b101_11111_010_00010; // nop [31]
-    program[4] = 16'b101_11111_010_00010; // nop [31]
-    program[5] = 16'b101_11111_010_00010; // nop [31]
-    program[6] = 16'b111_11110_000_00000; // set pins 0 [30] 
-    program[7] = 16'b101_11111_010_00010; // nop [31]
-    program[8] = 16'b101_11111_010_00010; // nop [31]
-    program[9] = 16'b101_11111_010_00010; // nop [31]
-    program[10] = 16'b101_11111_010_00010; // nop [31]
-    program[11] = 16'b000_00000_000_00001; // jmp 1
-  end
+  initial $readmemh("test.mem", program);
 
-  //initial begin // uart
-  //  program[0] = 16'b100_11000_101_00000; // pull side 1
-  //  program[1] = 16'b111_10111_001_00111; // set x 7, side 0 [7]
-  //  program[2] = 16'b011_00000_000_00001; // out pins 1
-  // program[3] = 16'b000_00110_010_00010; // jmp x-- 2 [6]
+  //initial begin // square
+  //  program[0] = 16'b111_00000_100_00001; // set pindirs 1
+  //  program[1] = 16'b111_11111_000_00001; // set pins 1 [31]
+  //  program[2] = 16'b101_11111_010_00010; // nop [31]
+  //  program[3] = 16'b101_11111_010_00010; // nop [31]
+  //  program[4] = 16'b101_11111_010_00010; // nop [31]
+  //  program[5] = 16'b101_11111_010_00010; // nop [31]
+  //  program[6] = 16'b111_11110_000_00000; // set pins 0 [30] 
+  //  program[7] = 16'b101_11111_010_00010; // nop [31]
+  //  program[8] = 16'b101_11111_010_00010; // nop [31]
+  //  program[9] = 16'b101_11111_010_00010; // nop [31]
+  //  program[10] = 16'b101_11111_010_00010; // nop [31]
+  //  program[11] = 16'b000_00000_000_00001; // jmp 1
   //end
 
   wire [5:0]  plen = 12; // Program length
