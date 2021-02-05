@@ -204,13 +204,13 @@ module machine (
           push = 1; dout = in_shift; new_val = 0; bit_count = 0; set_shift_in = 1; waiting = full;
         end
         if (auto_pull && osr_count >= osr_threshold) begin
-          pull = 0; new_val = din; set_shift_out = 1; waiting = empty;
+          pull = 1; new_val = din; set_shift_out = 1; waiting = empty;
         end
         // Execute current instruction
         case (op)
           JMP:  begin
                   new_val[4:0] = op2; 
-                  case (op1)
+                  case (op1) // Condition
                     0: jmp = 1;
                     1: jmp = (x == 0);
                     2: begin jmp = (x != 0); decx = 1; end
@@ -249,12 +249,33 @@ module machine (
                   set_shift_in = 1;  
                   new_val = 0;
                   waiting = op1[0] & full;
-                end else begin //PULL 
-                  pull = 1; 
-                  set_shift_out = 1; 
-                  waiting = op1[0] & empty; 
+                end else begin // PULL
+                  if (op1[1]) begin // IfEmpty
+                    if (osr_count >= osr_threshold) begin
+                      pull = 1;
+                      set_shift_out = 1;
+                      new_val = din;
+                      waiting = empty;
+                    end
+                  end else begin
+                    if (op1[0]) begin // Blocking
+                      pull = 1; 
+                      set_shift_out = 1; 
+                      waiting = empty;
+                      new_val = din;
+                    end else begin
+                      if (empty) begin // Copy X to OSR
+                        new_val = x;
+                        set_shift_out = 1;
+                      end else begin // Pull value if available
+                        pull = 1;
+                        new_val = din;
+                        set_shift_out = 1;
+                      end
+                    end
+                  end
                 end
-          MOV:  case (op1)
+          MOV:  case (op1)  // Destination
                   0: begin end // PINS
                   1: case (op2[2:0])                                                         // X
                        2: begin new_val = bit_op(y, op2[4:3]); setx = 1; end                 // Y
@@ -390,7 +411,7 @@ module machine (
     .shift(op2),
     .set(set_shift_out),
     .do_shift(do_out_shift),
-    .din(din),
+    .din(new_val),
     .dout(out_shift),
     .shift_count(osr_count)
   );
