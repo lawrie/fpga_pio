@@ -74,7 +74,9 @@ module machine (
   reg [15:0]  exec1_instr;
  
   // Divided clock enable signal 
+  reg         old_penable = 0;
   wire        penable;
+  wire        penable_edge = div < 24'h200 || (penable & ~old_penable);
 
   // Output from modules
   wire [31:0] x;
@@ -132,11 +134,13 @@ module machine (
   localparam IRQ  = 6;
   localparam SET  = 7;
 
+  always @(posedge clk) old_penable <= penable;
+
   // Count down if delay
   always @(posedge clk) begin
     if (reset || restart) 
       delay_cnt <= 0;
-    else if (en & penable) begin
+    else if (en & penable_edge) begin
       exec1 <= exec;
       exec1_instr <= exec_instr;
       if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
@@ -148,7 +152,7 @@ module machine (
 
   // Set output pins and pin directions 
   always @(posedge clk) begin
-    if (en & penable) begin
+    if (en & penable_edge) begin
       if (sideset_enabled)
         for (i=0;i<5;i++) 
           if (pins_side_count > i) output_pins[pins_side_base+i] <= side_set[i];
@@ -320,7 +324,7 @@ module machine (
 
   pc pc_reg (
     .clk(clk),
-    .penable(en & penable),
+    .penable(en & penable_edge),
     .reset(reset | restart),
     .din(new_val[4:0]),
     .jmp(jmp),
@@ -331,7 +335,7 @@ module machine (
 
   scratch scratch_x (
     .clk(clk),
-    .penable(en & penable),
+    .penable(en & penable_edge),
     .reset(reset | restart),
     .stalled(delay >0 && delay_cnt != 1),
     .din(new_val),
@@ -342,7 +346,7 @@ module machine (
 
   scratch scratch_y (
     .clk(clk),
-    .penable(en & penable),
+    .penable(en & penable_edge),
     .reset(reset | restart),
     .stalled(delay >0 && delay_cnt != 1),
     .din(new_val),
@@ -365,7 +369,7 @@ module machine (
 
   isr shift_in (
     .clk(clk),
-    .penable(en & penable),
+    .penable(en & penable_edge),
     .reset(reset | restart),
     .stalled(delay_cnt > 0),
     .shift(op2),
@@ -379,7 +383,7 @@ module machine (
 
   osr shift_out (
     .clk(clk),
-    .penable(en & penable),
+    .penable(en & penable_edge),
     .reset(reset | restart),
     .stalled(delay_cnt > 0),
     .dir(shift_dir),

@@ -33,7 +33,7 @@ module tb();
   end
 
   wire [5:0] plen = 4;          // Program length 4
-  wire [23:0] div = 24'h280;    // Clock divider 2.5
+  wire [23:0] div = 24'h1900;   // Clock divider 25
   wire [31:0] pin_grps = 32'h1; // SET group in pin 0
 
   integer i;
@@ -82,13 +82,14 @@ module tb();
     action = 0; 
     
     // Run for a while
-    repeat(100) @(posedge clk);
+    repeat(1000) @(posedge clk);
 
     $finish;
   end
 
+  // 25MHz clock
   always begin
-    #1 clk = !clk;
+    #20 clk = !clk;
   end
 
   pio pio_1 (
