@@ -37,3 +37,14 @@ make prog
 For the Ulxs3 board use the ulx3s directory.
 
 The current program flashes the red led approximately once per second.
+
+## Assembling programs
+
+You can assemble program using the Adafuit pioasm assembler (used by CircityPython), by:
+
+```sh
+cd asm
+./compile square.asm test.mem
+```
+
+and then move test.mem to the src directory.
