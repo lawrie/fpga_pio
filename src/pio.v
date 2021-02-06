@@ -66,7 +66,25 @@ module pio (
 
   integer i;
 
-  // Configure machines  
+  // Actions
+  localparam NONE  = 0;
+  localparam INSTR = 1;
+  localparam PEND  = 2;
+  localparam PULL  = 3;
+  localparam PUSH  = 4;
+  localparam GRPS  = 5;
+  localparam EN    = 6;
+  localparam DIV   = 7;
+  localparam SIDES = 8;
+  localparam IMM   = 9;
+  localparam APUSH = 10;
+  localparam APULL = 11;
+  localparam IPINS = 12;
+  localparam IDIRS = 13;
+  localparam ISRT  = 14;
+  localparam OSRT  = 15;
+
+  // Configure machines
   always @(posedge clk) begin
     if (reset) begin
       en <= 0;
@@ -97,36 +115,34 @@ module pio (
      push <= 0;
      imm <= 0;
      case (action)
-       1: instr[index] <= din[15:0];        // Set an instruction
-       2: begin                             // Configure pend
-            pend[mindex] <= din[4:0]; 
-          end 
-       3: begin                             // Pull vsalue from fifo 
-            pull[mindex] <= 1; 
-            dout <= pdout[mindex]; 
-          end
-       4: push[mindex] <= 1;                // Push a value to fifo
-       5: begin                             // Configure pin groups
-            pins_set_count[mindex]  <= din[2:0];
-            pins_set_base[mindex]   <= din[7:3];
-            pins_out_count[mindex]  <= din[10:8];
-            pins_out_base[mindex]   <= din[15:11];
-            pins_in_count[mindex]   <= din[18:16];
-            pins_in_base[mindex]    <= din[23:19];
-            pins_side_count[mindex] <= din[26:24];
-            pins_side_base[mindex]  <= din[31:27];
-          end
-       6: en <= din[3:0];                   // Enable machines
-       7: div[mindex] <= din[23:0];         // Configure clock dividers
-       8: sideset_bits[mindex] <= din[4:0]; // Configure side-set bits
-       9: imm <= 1;                         // Immediate instruction
-      11: jmp_pin <= din[3:0];              // Configure jump pins
-      10: auto_push <= din[3:0];            // Configure auto_push
-      11: auto_pull <= din[3:0];            // Configure auto_pull
-      12: initial_pins[mindex] <= din;      // Configure initial output pin values
-      13: initial_dirs[mindex] <= din;      // Configure initial pin directions
-      14: isr_threshold[mindex] <= din[4:0]; // Configure auto_push threshold
-      15: osr_threshold[mindex] <= din[4:0]; // Configure auto_pull threshold
+       INSTR: instr[index] <= din[15:0];         // Set an instruction
+       PEND : pend[mindex] <= din[4:0];          // Configire PEND    
+       PULL : begin                              // Pull value from fifo 
+                pull[mindex] <= 1; 
+                dout <= pdout[mindex]; 
+              end
+       PUSH : push[mindex] <= 1;                 // Push a value to fifo
+       GRPS : begin                              // Configure pin groups
+                pins_set_count[mindex]  <= din[2:0];
+                pins_set_base[mindex]   <= din[7:3];
+                pins_out_count[mindex]  <= din[10:8];
+                pins_out_base[mindex]   <= din[15:11];
+                pins_in_count[mindex]   <= din[18:16];
+                pins_in_base[mindex]    <= din[23:19];
+                pins_side_count[mindex] <= din[26:24];
+                pins_side_base[mindex]  <= din[31:27];
+              end
+       EN   : en <= din[3:0];                    // Enable machines
+       DIV  : div[mindex] <= din[23:0];          // Configure clock dividers
+       SIDES: sideset_bits[mindex] <= din[4:0];  // Configure side-set bits
+       IMM  : imm <= 1;                          // Immediate instruction
+       //JMP  : jmp_pin <= din[3:0];               // Configure jump pins
+       APUSH: auto_push <= din[3:0];             // Configure auto_push
+       APULL: auto_pull <= din[3:0];             // Configure auto_pull
+       IPINS: initial_pins[mindex] <= din;       // Configure initial output pin values
+       IDIRS: initial_dirs[mindex] <= din;       // Configure initial pin directions
+       ISRT : isr_threshold[mindex] <= din[4:0]; // Configure auto_push threshold
+       OSRT : osr_threshold[mindex] <= din[4:0]; // Configure auto_pull threshold
      endcase
     end
   end
