@@ -20,6 +20,8 @@ module top (
   wire [31:0] gpio_dir;   // Pin directions
   wire [31:0] dout;       // Output from PIO
   wire        irq0, irq1; // IRQ flags from PIO
+  wire [3:0]  full;       
+  wire [3:0]  empty;
 
   // Power-on reset
   reg [15:0] pwr_up_reset_counter = 0;
@@ -47,6 +49,7 @@ module top (
 
   reg [11:0] delay_cnt;
   reg [3:0] cp;
+  reg [2:0] stalled;
 
   always @(posedge clk_25mhz) begin
     if (reset) begin
@@ -58,6 +61,7 @@ module top (
       state <= 0;
       cindex <= 0;
       pindex <= 0;
+      stalled <= 0;
     end else begin
       case (state)
         0: begin // Send program to pio
@@ -69,16 +73,19 @@ module top (
                state <= 1;
            end
         1: begin // Do configuration
-             action <= conf[cindex][35:32];
-             din <= conf[cindex][31:0];
              cindex <= cindex + 1;
-             if (cindex == clen - 1)
+             if (cindex == clen) begin
                state <= 2;
+               action <= 0;
+             end else begin
+               action <= conf[cindex][35:32];
+               din <= conf[cindex][31:0];
+             end
            end
         2: begin // Run state
-             action <= 0;
+             if(full[0]) stalled <= stalled + 1;
              delay_cnt <= delay_cnt + 1;
-             if (delay_cnt == 1) begin
+             if (delay_cnt == 0 && !full[0]) begin
                action <= 4;  // PUSH
                cp <= cp + 1;
                if (cp == 10) begin
@@ -108,11 +115,13 @@ module top (
     .gpio_out(gpio_out),
     .gpio_dir(gpio_dir),
     .irq0(irq0),
-    .irq1(irq1)
+    .irq1(irq1),
+    .full(full),
+    .empty(empty)
   );
 
   // Led and gpio outpuy
-  assign led = cp;
+  assign led = ~stalled;
   assign tx = gpio_out[0];
 
 endmodule
