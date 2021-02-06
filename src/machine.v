@@ -150,7 +150,7 @@ module machine (
       exec1 <= exec;
       exec1_instr <= exec_instr;
       if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
-      else if (!waiting && !exec) delay_cnt <= delay;
+      else if (!waiting && !exec && delay > 0) delay_cnt <= delay;
     end
   end
  
