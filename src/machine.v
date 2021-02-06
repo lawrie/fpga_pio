@@ -66,7 +66,7 @@ module machine (
   reg         set_in_pins;
   reg         set_in_dirs;
   reg         exec;
-  reg         exec1;
+  reg         exec1 = 0;
   reg         waiting;
 
   reg [31:0]  new_val;
@@ -158,7 +158,7 @@ module machine (
 
   // Set output pins and pin directions 
   always @(posedge clk) begin
-    if (en & penable_edge) begin // TODO Set mask to allow multiplex of results from multiple machines
+    if (imm || (en && penable_edge)) begin // TODO Set mask to allow multiplex of results from multiple machines
       if (sideset_enabled)
         for (i=0;i<5;i++) 
           if (pins_side_count > i) output_pins[pins_side_base+i] <= side_set[i];
@@ -265,7 +265,7 @@ module machine (
                     end
                   end else begin
                     if (op1[0]) begin // Blocking
-                      pull = 1; 
+                      pull = penable_edge; 
                       set_shift_out = 1; 
                       waiting = empty;
                       new_val = din;
@@ -379,7 +379,7 @@ module machine (
   // X
   scratch scratch_x (
     .clk(clk),
-    .penable(en & penable_edge),
+    .penable(imm || (en && penable_edge)),
     .reset(reset | restart),
     .stalled(delay >0 && delay_cnt != 1),
     .din(new_val),
@@ -391,7 +391,7 @@ module machine (
   // Y
   scratch scratch_y (
     .clk(clk),
-    .penable(en & penable_edge),
+    .penable(imm || (en && penable_edge)),
     .reset(reset | restart),
     .stalled(delay >0 && delay_cnt != 1),
     .din(new_val),
@@ -403,7 +403,7 @@ module machine (
   // ISR
   isr shift_in (
     .clk(clk),
-    .penable(en & penable_edge),
+    .penable(imm || (en || penable_edge)),
     .reset(reset | restart),
     .stalled(delay_cnt > 0),
     .shift(op2),
@@ -418,7 +418,7 @@ module machine (
   // OSR
   osr shift_out (
     .clk(clk),
-    .penable(en & penable_edge),
+    .penable(imm || (en & penable_edge)),
     .reset(reset | restart),
     .stalled(delay_cnt > 0),
     .dir(shift_dir),

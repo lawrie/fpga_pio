@@ -45,7 +45,7 @@ module top (
   reg [4:0] cindex;
   reg [4:0] pindex;
 
-  reg [10:0] delay_cnt;
+  reg [11:0] delay_cnt;
   reg [3:0] cp;
 
   always @(posedge clk_25mhz) begin
