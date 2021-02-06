@@ -5,8 +5,7 @@ module top (
   input [6:0]   btn,
   // Leds
   output [7:0]  led,
-  output [27:0] gn,
-  output        tx
+  output [27:0] gn
 );
 
   // PIO registers and wires
@@ -34,19 +33,16 @@ module top (
 
   // Configuration of state machines and program instructions
   reg [15:0] program [0:31];
-  initial $readmemh("uart_tx.mem", program);
+  initial $readmemh("test.mem", program);
 
   reg [35:0] conf [0:31];
   wire [5:0] clen = 5; // Config length
-  initial $readmemh("tx_conf.mem", conf);
+  initial $readmemh("conf.mem", conf);
 
   // State machine to send program to PIO and configure PIO state machines
   reg [1:0] state;
   reg [4:0] cindex;
   reg [4:0] pindex;
-
-  reg [10:0] delay_cnt;
-  reg [3:0] cp;
 
   always @(posedge clk_25mhz) begin
     if (reset) begin
@@ -77,19 +73,6 @@ module top (
            end
         2: begin // Run state
              action <= 0;
-             delay_cnt <= delay_cnt + 1;
-             if (delay_cnt == 1) begin
-               action <= 4;  // PUSH
-               cp <= cp + 1;
-               if (cp == 10) begin
-                 din <= 10;
-                 cp <= 0;
-               end else begin
-                 din <= 32'h30 + cp;
-               end
-             end else if (delay_cnt == 1) begin
-               action <= 0;
-             end
            end
       endcase
     end
@@ -112,8 +95,8 @@ module top (
   );
 
   // Led and gpio outpuy
-  assign led = cp;
-  assign tx = gpio_out[0];
+  assign led = {reset, gpio_out[0]};
+  assign gn[0] = gpio_out[0];
 
 endmodule
 

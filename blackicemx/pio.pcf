@@ -7,3 +7,5 @@ set_io led[2] 52
 
 set_io gn[0] 26
 
+set_io tx 62
+
