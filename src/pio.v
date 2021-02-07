@@ -28,6 +28,7 @@ module pio (
   
   reg [4:0]   pstart          [0:3];
   reg [4:0]   pend            [0:3];
+  reg [4:0]   wrap_target     [0:3];
   reg [23:0]  div             [0:3];
   reg [4:0]   pins_in_base    [0:3];
   reg [2:0]   pins_in_count   [0:3];
@@ -97,6 +98,7 @@ module pio (
         div[i] <= 0; // no clock divider
         pend[i] <= 0;
         pstart[i] <= 0;
+        wrap_target[i] <= 0;
         pins_in_count[i] <= 0;
         pins_in_base[i] <= 0;
         pins_out_count[i] <= 0;
@@ -118,7 +120,11 @@ module pio (
      imm <= 0;
      case (action)
        INSTR: instr[index] <= din[15:0];         // Set an instruction
-       PEND : pend[mindex] <= din[4:0];          // Configire PEND    
+       PEND : begin                              // Configure pstart, pend, wrap_target
+                pend[mindex] <= din[4:0];
+                pstart[mindex] <= din [9:5];
+                wrap_target[mindex] <= din[14:10];
+              end
        PULL : begin                              // Pull value from fifo 
                 pull[mindex] <= 1; 
                 dout <= pdout[mindex]; 
@@ -168,10 +174,10 @@ module pio (
         .sideset_enable_bit(sideset_bits[j] > 0), // TODO Configure this
         .shift_dir(shift_dir[j]),
         .div(div[j]),
-        .instr(imm ? din[15:0] : instr[pc[j]]),
+        .instr(imm ? din[15:0] : instr[pstart[j] + pc[j]]),
         .imm(imm),
-        .pstart(pstart[j]),
         .pend(pend[j]),
+        .wrap_target(wrap_target[j]),
         .pins_out_base(pins_out_base[j]),
         .pins_out_count(pins_out_count[j]),
         .pins_set_base(pins_set_base[j]),

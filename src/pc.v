@@ -7,6 +7,7 @@ module pc (
   input        jmp,
   input [4:0]  pend,
   input        stalled,
+  input [4:0]  wrap_target,
   output [4:0] dout
 );
 
@@ -21,7 +22,7 @@ module pc (
       if (jmp)
         index <= din;
       else
-        index <= index == pend ? 0 : index + 1;
+        index <= index == pend ? wrap_target : index + 1;
     end
   end
 

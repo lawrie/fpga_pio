@@ -16,8 +16,8 @@ module machine (
 
   // Configuration
   input [1:0]   mindex,
-  input [4:0]   pstart,
   input [4:0]   pend,
+  input [4:0]   wrap_target,
   input         jmp_pin,
   input [2:0]   sideset_bits,
   input         sideset_enable_bit,
@@ -370,6 +370,7 @@ module machine (
     .jmp(jmp),
     .stalled(waiting || imm || delaying),
     .pend(pend),
+    .wrap_target(wrap_target),
     .dout(pc)
   );
 
