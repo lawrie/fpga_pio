@@ -102,7 +102,7 @@ module machine (
   reg [5:0]   bit_count;
 
   // States
-  wire enabled  = imm || (en && penable); // Instruction execution enabled
+  wire enabled  = exec1 || imm || (en && penable); // Instruction execution enabled
   wire delaying = delay_cnt > 0;
 
   // Function to reverse the order of bits in a word
@@ -368,7 +368,7 @@ module machine (
     .reset(reset | restart),
     .din(new_val[4:0]),
     .jmp(jmp),
-    .stalled(waiting || imm || delaying),
+    .stalled(waiting || imm || exec1 || delaying),
     .pend(pend),
     .wrap_target(wrap_target),
     .dout(pc)
