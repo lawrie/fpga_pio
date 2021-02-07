@@ -36,7 +36,7 @@ module tb();
   initial $readmemh("uart_tx.mem", program);
 
   wire [5:0]  plen = 4;                // Program length
-  wire [23:0] div = 24'h0100;          // Clock divider
+  wire [23:0] div = 24'h0200;          // Clock divider
   wire [31:0] pin_grps = 32'h01000100; // OUT and SIDE grps pin 0
   wire [4:0]  sideset_bits = 1;        // Side-set bits
   integer i;
@@ -113,7 +113,7 @@ module tb();
       action = 0;
 
       // Wait for it to be sent
-      repeat(100) @(posedge clk);
+      repeat(180) @(posedge clk);
     end
 
     $finish;

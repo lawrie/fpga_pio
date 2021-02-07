@@ -5,7 +5,8 @@ module top (
   input [6:0]   btn,
   // Leds
   output [7:0]  led,
-  output [27:0] gn
+  output [27:0] gn,
+  output        tx
 );
 
   // PIO registers and wires
@@ -19,6 +20,8 @@ module top (
   wire [31:0] gpio_dir;   // Pin directions
   wire [31:0] dout;       // Output from PIO
   wire        irq0, irq1; // IRQ flags from PIO
+  wire [3:0]  full;       // Set when TX fifo is full  
+  wire [3:0]  empty;      // Set when RX fifo is empty
 
   // Power-on reset
   reg [15:0] pwr_up_reset_counter = 0;
@@ -65,14 +68,16 @@ module top (
                state <= 1;
            end
         1: begin // Do configuration
-             action <= conf[cindex][35:32];
-             din <= conf[cindex][31:0];
              cindex <= cindex + 1;
-             if (cindex == clen - 1)
+             if (cindex == clen) begin
                state <= 2;
+               action <= 0;
+             end else begin
+               action <= conf[cindex][35:32];
+               din <= conf[cindex][31:0];
+             end
            end
         2: begin // Run state
-             action <= 0;
            end
       endcase
     end
@@ -91,12 +96,15 @@ module top (
     .gpio_out(gpio_out),
     .gpio_dir(gpio_dir),
     .irq0(irq0),
-    .irq1(irq1)
+    .irq1(irq1),
+    .full(full),
+    .empty(empty)
   );
 
   // Led and gpio outpuy
   assign led = {reset, gpio_out[0]};
   assign gn[0] = gpio_out[0];
+  assign tx = 0;
 
 endmodule
 

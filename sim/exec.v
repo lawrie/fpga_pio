@@ -33,11 +33,11 @@ module tb();
 
   // Configuration
   reg [15:0] program [0:31];
-  initial $readmemh("test.mem", program);
+  initial $readmemh("square.mem", program);
 
   wire [5:0] plen = 2;          // Program length
   wire [23:0] div = 24'h0280;   // Clock divider
-  wire [31:0] pin_grps = 32'h1; // SET group in pin 0
+  wire [31:0] pin_grps = 32'h1; // SET group is pin 0
 
   integer i;
 
@@ -96,13 +96,16 @@ module tb();
     act(GRPS, pin_grps);
 
     // Enable machine 1
-    act(EN, 1);
+    //act(EN, 1);
 
     // Configuration done
     act(NONE, 0);
+
+    // Set pin 0
+    act(IMM, 16'b111_00000_000_00001);
     
     // Run for a while
-    repeat(100) @(posedge clk);
+    repeat(10) @(posedge clk);
 
     $finish;
   end

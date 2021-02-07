@@ -74,9 +74,7 @@ module machine (
   reg [15:0]  exec1_instr;
  
   // Divided clock enable signal 
-  reg         old_penable = 0;
   wire        penable;
-  wire        penable_edge = div < 24'h200 || (penable & ~old_penable);
 
   // Output from modules
   wire [31:0] x;
@@ -102,6 +100,10 @@ module machine (
 
   reg [4:0]   delay_cnt = 0;
   reg [5:0]   bit_count;
+
+  // States
+  wire enabled  = imm || (en && penable); // Instruction execution enabled
+  wire delaying = delay_cnt > 0;
 
   // Function to reverse the order of bits in a word
   function [31:0] reverse (
@@ -139,17 +141,14 @@ module machine (
   localparam IRQ  = 6;
   localparam SET  = 7;
 
-  // Supports detection of penable positive clock edge
-  always @(posedge clk) old_penable <= penable;
-
   // Count down if delay
   always @(posedge clk) begin
     if (reset || restart) 
       delay_cnt <= 0;
-    else if (en & penable_edge) begin
+    else if (en & penable) begin
       exec1 <= exec;
       exec1_instr <= exec_instr;
-      if (delay_cnt > 0) delay_cnt <= delay_cnt - 1;
+      if (delaying) delay_cnt <= delay_cnt - 1;
       else if (!waiting && !exec && delay > 0) delay_cnt <= delay;
     end
   end
@@ -158,7 +157,7 @@ module machine (
 
   // Set output pins and pin directions 
   always @(posedge clk) begin
-    if (imm || (en && penable_edge)) begin // TODO Set mask to allow multiplex of results from multiple machines
+    if (enabled && !delaying) begin // TODO Set mask to allow multiplex of results from multiple machines
       if (sideset_enabled)
         for (i=0;i<5;i++) 
           if (pins_side_count > i) output_pins[pins_side_base+i] <= side_set[i];
@@ -179,7 +178,6 @@ module machine (
   
   // Execute the current instruction
   always @* begin
-    begin
       jmp  = 0;
       pull = 0;
       push = 0;
@@ -204,7 +202,7 @@ module machine (
       exec_instr = 0;
       irq_flags_out = 0;
       dout = 0;
-      begin
+      if (enabled && !delaying) begin
         // Auto push and auto pull
         if (auto_push && isr_count >= isr_threshold) begin
           push = 1; dout = in_shift; new_val = 0; bit_count = 0; set_shift_in = 1; waiting = full;
@@ -265,7 +263,7 @@ module machine (
                     end
                   end else begin
                     if (op1[0]) begin // Blocking
-                      pull = penable_edge; 
+                      pull = 1; 
                       set_shift_out = 1; 
                       waiting = empty;
                       new_val = din;
@@ -339,7 +337,6 @@ module machine (
                 endcase
         endcase
       end
-    end
   end
 
   // Clock divider
@@ -367,11 +364,11 @@ module machine (
   // PC
   pc pc_reg (
     .clk(clk),
-    .penable(en & penable_edge),
+    .penable(en & penable),
     .reset(reset | restart),
     .din(new_val[4:0]),
     .jmp(jmp),
-    .stalled(waiting || imm || (delay >0 && delay_cnt != 1)),
+    .stalled(waiting || imm || delaying),
     .pend(pend),
     .dout(pc)
   );
@@ -379,9 +376,9 @@ module machine (
   // X
   scratch scratch_x (
     .clk(clk),
-    .penable(imm || (en && penable_edge)),
+    .penable(enabled),
     .reset(reset | restart),
-    .stalled(delay >0 && delay_cnt != 1),
+    .stalled(delaying),
     .din(new_val),
     .set(setx),
     .dec(decx),
@@ -391,9 +388,9 @@ module machine (
   // Y
   scratch scratch_y (
     .clk(clk),
-    .penable(imm || (en && penable_edge)),
+    .penable(enabled),
     .reset(reset | restart),
-    .stalled(delay >0 && delay_cnt != 1),
+    .stalled(delaying),
     .din(new_val),
     .set(sety),
     .dec(decy),
@@ -403,9 +400,9 @@ module machine (
   // ISR
   isr shift_in (
     .clk(clk),
-    .penable(imm || (en || penable_edge)),
+    .penable(enabled),
     .reset(reset | restart),
-    .stalled(delay_cnt > 0),
+    .stalled(delaying),
     .shift(op2),
     .set(set_shift_in),
     .do_shift(do_in_shift),
@@ -418,9 +415,9 @@ module machine (
   // OSR
   osr shift_out (
     .clk(clk),
-    .penable(imm || (en & penable_edge)),
+    .penable(enabled),
     .reset(reset | restart),
-    .stalled(delay_cnt > 0),
+    .stalled(delaying),
     .dir(shift_dir),
     .shift(op2),
     .set(set_shift_out),
