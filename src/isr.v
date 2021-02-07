@@ -15,7 +15,10 @@ module isr (
 
   reg [31:0] shift_reg;
   reg [5:0]  count;
+
+  // A shift value of 0 means shift 32
   wire [5:0] shift_val = shift == 0 ? 32 : shift;
+  // Left align the input value and concatenate it with the shift register to produce a 64-bit value
   wire [63:0] next_val = {shift_reg, din << (32 - shift_val)} << shift_val;
 
   always @(posedge clk) begin

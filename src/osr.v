@@ -6,26 +6,32 @@ module osr (
   input         stalled,
   input [31:0]  din,
   input [4:0]   shift,
-  input         dir,
+  input         dir,   // 0 - left, 1 - right
   input         set,
   input         do_shift,
   output [31:0] dout,
   output [5:0]  shift_count
 );
 
-  reg [63:0] shift_reg;
+  reg [31:0] shift_reg;
   reg [5:0]  count;
-  wire [5:0] shift_val = do_shift ? (shift == 0 ? 32 : shift) : 0;
-  wire [63:0] new_shift = dir ? shift_reg >> shift_val : shift_reg << shift_val;
+
+  // A shift value of 0 means shift 32
+  wire [5:0] shift_val = shift == 0 ? 32 : shift;
+  // Calculate the 64-bit value of the shift register after a shift
+  wire [63:0] shift64 = dir ? {shift_reg, 32'b0} >> shift_val : {32'b0, shift_reg} << shift_val;
+  // Calculate the right-aligned shifted out value
+  wire [31:0] shift_out = dir ? (shift64[31:0] >> (32 - shift_val)) : shift64[63:32];
+  // Calculate the new shift register value after a shift
+  wire [31:0] new_shift = dir ? shift64[63:32] : shift64[31:0];
 
   always @(posedge clk) begin
     if (reset) begin
       shift_reg <= 0;
-      count <= 32;  // Empty
+      count <= 32;  // Empty (read to trigger auto-pull)
     end else if (penable && !stalled) begin
        if (set) begin
-         if (dir) shift_reg <= {din, 32'b0}; // For right shift
-         else shift_reg <= {32'b0, din};     // For left shift
+         shift_reg <= din;
          count <= 0;
        end else if (do_shift) begin
          shift_reg <= new_shift;
@@ -34,9 +40,9 @@ module osr (
     end
   end
 
-  assign dout = dir ? (new_shift[31:0] >> (32 - shift_val)) // New shift value must immediately be available
-                    : ((new_shift[63:32] << (32 - shift_val)) >> (32-shift_val)); // clear most significant bits
+  // The output value is the amount shifted out if do_shift ia active otherwise the current shift register
+  assign dout = do_shift ? shift_out : shift_reg;
   assign shift_count = count;
 
 endmodule
- 
+

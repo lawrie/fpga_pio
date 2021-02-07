@@ -119,6 +119,10 @@ module tb();
 
     repeat(80) @(posedge clk);
 
+    // Stop
+    gpio_in[0] = 0;
+    repeat(20) @(posedge clk);
+
     // pull  
     @(negedge clk);
     action = 3;
@@ -126,7 +130,7 @@ module tb();
     @(negedge clk);
     
     action = 0;
-
+    repeat(20) @(posedge clk);
     
     $finish;
   end
