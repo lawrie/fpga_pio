@@ -68,6 +68,7 @@ module machine (
   reg         exec;
   reg         exec1 = 0;
   reg         waiting;
+  reg         auto;
 
   reg [31:0]  new_val;
   reg [15:0]  exec_instr;
@@ -191,6 +192,7 @@ module machine (
       sety = 0;
       exec = 0;
       waiting = 0;
+      auto = 0;
       new_val = 0;
       bit_count = 0;
       set_set_pins = 0;
@@ -203,14 +205,6 @@ module machine (
       irq_flags_out = 0;
       dout = 0;
       if (enabled && !delaying) begin
-        // Auto push and auto pull
-        if (auto_push && isr_count >= isr_threshold) begin
-          push = 1; dout = in_shift; new_val = 0; bit_count = 0; set_shift_in = 1; waiting = full;
-        end
-        if (auto_pull && osr_count >= osr_threshold) begin
-          pull = 1; new_val = din; set_shift_out = 1; waiting = empty;
-        end
-        // Execute current instruction
         case (op)
           JMP:  begin
                   new_val[4:0] = op2; 
@@ -230,7 +224,15 @@ module machine (
                   1: waiting = input_pins[op2] != op1[2];
                   2: waiting = irq_flags_out[irq_index] != op1[2];
                 endcase
-          IN:   case (op1) // Source
+          IN:   if (auto_push && isr_count >= isr_threshold) begin
+                   push = 1; 
+                   dout = in_shift; 
+                   new_val = 0; 
+                   bit_count = 0; 
+                   set_shift_in = !full; 
+                   waiting = full; 
+                   auto = 1;
+                end else case (op1) // Source
                   0: begin do_in_shift = 1; new_val = input_pins; end
                   1: begin do_in_shift = 1; new_val = x; end
                   2: begin do_in_shift = 1; new_val = y; end
@@ -238,7 +240,9 @@ module machine (
                   6: begin do_in_shift = 1; new_val = in_shift; end
                   7: begin do_in_shift = 1; new_val = out_shift; end
                 endcase
-          OUT:  case (op1) // Destination
+          OUT:  if (auto_pull && osr_count >= osr_threshold) begin
+                   pull = 1; new_val = din; set_shift_out = !empty; waiting = empty; auto = 1;
+                end else case (op1) // Destination
                   0: begin do_out_shift = 1; new_val = out_shift; set_out_pins = 1; end                  // PINS
                   1: begin do_out_shift = 1; new_val = out_shift; setx = 1; end                          // X
                   2: begin do_out_shift = 1; new_val = out_shift; sety = 1; end                          // Y
@@ -250,21 +254,21 @@ module machine (
           PUSH: if (!op1[2]) begin // PUSH TODO Push IfFull
                   push = 1; 
                   dout = in_shift; 
-                  set_shift_in = 1;  
+                  set_shift_in = !(op1[0] && full);  
                   new_val = 0;
-                  waiting = op1[0] & full;
+                  waiting = op1[0] && full;
                 end else begin // PULL
                   if (op1[1]) begin // IfEmpty
                     if (osr_count >= osr_threshold) begin
                       pull = 1;
-                      set_shift_out = 1;
+                      set_shift_out = !empty;
                       new_val = din;
                       waiting = empty;
                     end
                   end else begin
                     if (op1[0]) begin // Blocking
                       pull = 1; 
-                      set_shift_out = 1; 
+                      set_shift_out = !empty; 
                       waiting = empty;
                       new_val = din;
                     end else begin
@@ -368,7 +372,7 @@ module machine (
     .reset(reset | restart),
     .din(new_val[4:0]),
     .jmp(jmp),
-    .stalled(waiting || imm || exec1 || delaying),
+    .stalled(waiting || auto || imm || exec1 || delaying),
     .pend(pend),
     .wrap_target(wrap_target),
     .dout(pc)

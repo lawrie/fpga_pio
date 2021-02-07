@@ -45,7 +45,8 @@ module pio (
   reg [4:0]   osr_threshold   [0:3];
 
   reg [3:0]   sideset_enable_bit;
-  reg [3:0]   shift_dir = 4'b1111;
+  reg [3:0]   sideset_enabled;
+  reg [3:0]   shift_dir;
 
   reg [3:0]   push;
   reg [3:0]   pull;
@@ -94,6 +95,8 @@ module pio (
       jmp_pin <= 0;
       auto_pull <= 0;
       auto_push <= 0;
+      shift_dir <= 4'b1111;
+      sideset_enabled <= 4'b1111;
       for(i=0;i<4;i++) begin
         div[i] <= 0; // no clock divider
         pend[i] <= 0;
@@ -142,7 +145,10 @@ module pio (
               end
        EN   : en <= din[3:0];                    // Enable machines
        DIV  : div[mindex] <= din[23:0];          // Configure clock dividers
-       SIDES: sideset_bits[mindex] <= din[4:0];  // Configure side-set bits
+       SIDES: begin                              // Configure side-set bits
+                sideset_bits[mindex] <= din[4:0];
+                sideset_enabled[mindex] <= ~din[5];
+              end
        IMM  : imm <= 1;                          // Immediate instruction
        //JMP  : jmp_pin <= din[3:0];               // Configure jump pins
        APUSH: auto_push <= din[3:0];             // Configure auto_push
@@ -150,7 +156,10 @@ module pio (
        IPINS: initial_pins[mindex] <= din;       // Configure initial output pin values
        IDIRS: initial_dirs[mindex] <= din;       // Configure initial pin directions
        ISRT : isr_threshold[mindex] <= din[4:0]; // Configure auto_push threshold
-       OSRT : osr_threshold[mindex] <= din[4:0]; // Configure auto_pull threshold
+       OSRT : begin                              // Configure auto_pull threshold
+                osr_threshold[mindex] <= din[4:0];
+                shift_dir[mindex] <= ~din[5];    // Shift direction is the getaion of bit 5
+              end
      endcase
     end
   end
@@ -171,7 +180,7 @@ module pio (
         .output_pins(output_pins[j]),
         .pin_directions(pin_directions[j]),
         .sideset_bits(sideset_bits[j]),
-        .sideset_enable_bit(sideset_bits[j] > 0), // TODO Configure this
+        .sideset_enable_bit(sideset_bits[j] > 0 ? sideset_enabled[j] : 1'b0),
         .shift_dir(shift_dir[j]),
         .div(div[j]),
         .instr(imm ? din[15:0] : instr[pstart[j] + pc[j]]),
