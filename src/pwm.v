@@ -89,7 +89,7 @@ module top (
              // Send new value when top 4 bits change
              if (val_bits != val) begin
                action <= 4;  // PUSH
-               din <= val_bits[3:1];
+               din <= val_bits == 0 ? 32'hffff : val_bits;
              end
            end
       endcase
