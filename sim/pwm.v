@@ -100,33 +100,27 @@ module tb();
     // Configure side-set bits
     act(SIDES, sideset_bits);
 
+    // Push the period
+    act(PUSH, 10);
+    repeat(2) @(posedge clk);
+    action = 0;
+
+    // Send a PULL
+    act(IMM, 16'b100_00000_100_00000);
+    repeat(2) @(posedge clk);
+    action = 0;
+
+    // Send a MOV ISR OSR
+    act(IMM, 16'b101_00000_110_00111);
+    repeat(2) @(posedge clk);
+    action = 0;
+
     // Enable machine 1
     act(EN, 1);
 
     // Configuration done
     act(NONE, 0);
     
-    // Small gap
-    repeat(2) @(posedge clk);
-
-    // Push the period
-    act(PUSH, 10);
-    action = 0;
-
-    // Small gap
-    repeat(2) @(posedge clk);
-
-    // Send a PULL
-    act(IMM, 16'b100_00000_100_00000);
-    action = 0;
-
-    // Small gap
-    repeat(2) @(posedge clk);
-
-    // Send a MOV ISR OSR
-    act(IMM, 16'b101_00000_110_00111);
-    action = 0;
-
     // Small gap
     repeat(2) @(posedge clk);
 
