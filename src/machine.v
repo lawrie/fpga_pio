@@ -97,6 +97,8 @@ module machine (
 
   // Values for use in gtkwave during simulation
   wire        pin0 = output_pins[0];
+  wire        pin1 = output_pins[1];
+  wire        pin2 = output_pins[2];
   wire        in_pin0 = input_pins[0];
 
   reg [4:0]   delay_cnt = 0;
@@ -159,7 +161,7 @@ module machine (
   // Set output pins and pin directions 
   always @(posedge clk) begin
     if (enabled && !delaying) begin // TODO Set mask to allow multiplex of results from multiple machines
-      if (sideset_enabled)
+      if (sideset_enabled && !(auto && !waiting))
         for (i=0;i<5;i++) 
           if (pins_side_count > i) output_pins[pins_side_base+i] <= side_set[i];
       if (set_set_pins)

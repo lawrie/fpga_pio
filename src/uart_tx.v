@@ -36,21 +36,20 @@ module top (
 
   // Configuration of state machines and program instructions
   reg [15:0] program [0:31];
-  initial $readmemh("pwm.mem", program);
+  initial $readmemh("uart_tx.mem", program);
 
   reg [35:0] conf [0:31];
-  wire [5:0] clen = 11; // Config length
-  initial $readmemh("pwm_conf.mem", conf);
+  wire [5:0] clen = 5; // Config length
+  initial $readmemh("tx_conf.mem", conf);
 
   // State machine to send program to PIO and configure PIO state machines
   reg [1:0] state;
   reg [4:0] cindex;
   reg [4:0] pindex;
 
-  reg [26:0] delay_cnt;
-  reg [3:0]  val;
-
-  wire [3:0] val_bits = delay_cnt[26:23];
+  reg [11:0] delay_cnt;
+  reg [3:0] cp;
+  reg [2:0] stalled;
 
   always @(posedge clk_25mhz) begin
     if (reset) begin
@@ -62,6 +61,7 @@ module top (
       state <= 0;
       cindex <= 0;
       pindex <= 0;
+      stalled <= 0;
     end else begin
       case (state)
         0: begin // Send program to pio
@@ -83,13 +83,19 @@ module top (
              end
            end
         2: begin // Run state
+             if (full[0]) stalled <= stalled + 1;
              delay_cnt <= delay_cnt + 1;
-             val  <= val_bits;
-             action <= 0;
-             // Send new value when top 4 bits change
-             if (val_bits != val) begin
+             if (delay_cnt == 0 && !full[0]) begin
                action <= 4;  // PUSH
-               din <= val_bits == 0 ? 32'hffff : val_bits - 1;
+               cp <= cp + 1;
+               if (cp == 10) begin
+                 din <= 10;
+                 cp <= 0;
+               end else begin
+                 din <= 32'h30 + cp;
+               end
+             end else if (delay_cnt == 1) begin
+               action <= 0;
              end
            end
       endcase
@@ -114,8 +120,9 @@ module top (
     .empty(empty)
   );
 
-  // Led and gpio output
-  assign led = {2'b11, ~gpio_out[0]};
+  // Led and gpio outpuy
+  assign led = ~stalled;
+  assign tx = gpio_out[0];
 
 endmodule
 

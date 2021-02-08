@@ -6,6 +6,8 @@ set_io led[1] 55
 set_io led[2] 52
 
 set_io gn[0] 21
+set_io gn[1] 22
+set_io gn[2] 25
 
 set_io tx 62
 
