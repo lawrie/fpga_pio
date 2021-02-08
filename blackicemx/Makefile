@@ -1,6 +1,6 @@
 TOP ?= top
 
-VERILOG = ../src/${TOP}.v ../src/pio.v ../src/machine.v \
+VERILOG = ../src/top/${TOP}.v ../src/pio.v ../src/machine.v \
           ../src/pc.v ../src/decoder.v ../src/divider.v \
           ../src/isr.v ../src/osr.v ../src/scratch.v ../src/fifo.v
 
