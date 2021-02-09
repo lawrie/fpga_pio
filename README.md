@@ -22,7 +22,7 @@ That runs the tb.v testbench. You can see the results by opening waves.vcd using
 You can run the other test programs in the sim directory, such as uart_tx.v, by:
 
 ```sh
-make clean sim TB=uart_tx
+make sim TB=uart_tx
 ```
 
 ## Synthesis
@@ -38,13 +38,23 @@ For the Ulxs3 board use the ulx3s directory.
 
 The current program flashes the red led approximately once per second.
 
+You can select a different top-level module by, for example:
+
+```sh
+make clean prog TOP=hello
+```
+
+Current working top level modules include: blink, hello, wd2812, exec, uart_tx.
+
 ## Assembling programs
 
-You can assemble program using the Adafuit pioasm assembler (used by CircityPython), by:
+You can assemble program using the Adafuit pioasm assembler (used by CircuitPython), by:
 
 ```sh
 cd asm
-./compile square.asm test.mem
+./compile square.asm square.mem
 ```
 
-and then move test.mem to the src directory.
+and then move square.mem to the src/top and/or the sim directory.
+
+The compiler is currently incomplete and so the .mem files sometimes need modification, e.g when the "'side_set opt" option is used.
