@@ -26,7 +26,7 @@ module machine (
   input [4:0]   pins_set_base,
   input [2:0]   pins_set_count,
   input [4:0]   pins_in_base,
-  input [2:0]   pins_in_count,
+  input [2:0]   pins_in_count, // TODO Is this needed?
   input [4:0]   pins_side_base,
   input [2:0]   pins_side_count,
   input         shift_dir,
@@ -149,7 +149,7 @@ module machine (
     if (reset || restart) 
       delay_cnt <= 0;
     else if (en & penable) begin
-      exec1 <= exec;
+      exec1 <= exec; // Do execition on next cycle after exec set
       exec1_instr <= exec_instr;
       if (delaying) delay_cnt <= delay_cnt - 1;
       else if (!waiting && !exec && delay > 0) delay_cnt <= delay;
@@ -158,10 +158,10 @@ module machine (
  
   integer i;
 
-  // Set output pins and pin directions 
+  // Set output pins and pin directions TODO Move this to PIO and merge output values from machines
   always @(posedge clk) begin
     if (enabled && !delaying) begin // TODO Set mask to allow multiplex of results from multiple machines
-      if (sideset_enabled && !(auto && !waiting))
+      if (sideset_enabled && !(auto && !waiting)) // TODO Is auto test correct?
         for (i=0;i<5;i++) 
           if (pins_side_count > i) output_pins[pins_side_base+i] <= side_set[i];
       if (set_set_pins)
@@ -223,7 +223,7 @@ module machine (
               end
         WAIT: case (op1[1:0]) // Source
                 0: waiting = gpio_pins[op2] != op1[2];
-                1: waiting = input_pins[op2] != op1[2];
+                1: waiting = input_pins[pins_in_base + op2] != op1[2];
                 2: waiting = irq_flags_out[irq_index] != op1[2];
               endcase
         IN:   if (auto_push && isr_count >= isr_threshold) begin
@@ -235,7 +235,7 @@ module machine (
                  waiting = full; 
                  auto = 1;
               end else case (op1) // Source
-                0: begin do_in_shift = 1; new_val = input_pins; end
+                0: begin do_in_shift = 1; new_val = input_pins >> pins_in_base; end
                 1: begin do_in_shift = 1; new_val = x; end
                 2: begin do_in_shift = 1; new_val = y; end
                 3: begin do_in_shift = 1; new_val = null; end
@@ -253,19 +253,29 @@ module machine (
                 6: begin do_out_shift = 1; new_val = out_shift; bit_count = op2; set_shift_in = 1; end // ISR
                 7: begin do_out_shift = 1; exec = 1; exec_instr = out_shift[15:0]; end                 // EXEC
               endcase
-        PUSH: if (!op1[2]) begin // PUSH TODO Push IfFull
-                push = 1; 
-                dout = in_shift; 
-                set_shift_in = !(op1[0] && full);  
-                new_val = 0;
-                waiting = op1[0] && full;
-              end else begin // PULL
+        PUSH: if (!op1[2]) begin // PUSH TODO No-op when auto-push?
+                if (op1[1]) begin // IFFull
+                  if (isr_count >= isr_threshold) begin
+                    push = 1;
+                    dout = in_shift;
+                    set_shift_in = !full;
+                    new_val = 0;
+                    waiting = full; // TODO Should this implement non-blocking?
+                  end
+                end else begin
+                  push = 1; 
+                  dout = in_shift; 
+                  set_shift_in = !(op1[0] && full);  
+                  new_val = 0;
+                  waiting = op1[0] && full;
+                end
+              end else begin // PULL TODO No-op when auto-pull
                 if (op1[1]) begin // IfEmpty
                   if (osr_count >= osr_threshold) begin
                     pull = 1;
                     set_shift_out = !empty;
                     new_val = din;
-                    waiting = empty;
+                    waiting = empty; // TODO Should this implement non-blocking?
                   end
                 end else begin
                   if (op1[0]) begin // Blocking
