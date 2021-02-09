@@ -8,6 +8,12 @@ It is currently incomplete, but some programs run in simulation and on open sour
 
 The current supported boards are the Blackice MX and the Ulx3s.
 
+The current method of configuring and controlling PIO from a top-level module is different from that used on the RP2040 chip, and will probably be changed for closer compatibility.
+
+For use by a SoC, e.g. a RISC-V SoC such as SaxonSoc, the appropriate peripheral bus interface would need to be added.
+
+For use from a host processor, such as one running micropython, an SPI read/write memory interface could be added. This would be a lot slower than a bus interface but speed is not usually an issue for configuration and control. There are usually too few pins between a host processor and the fpga to implement a 32-bit (or even an 8-bit) bus interface.
+
 ## Simulation
 
 To run a program in simulation, clone the repository and do:
