@@ -259,9 +259,9 @@ module machine (
                   if (isr_count >= isr_threshold) begin
                     push = 1;
                     dout = in_shift;
-                    set_shift_in = !full;
+                    set_shift_in = !(op1[0] && full);
                     new_val = 0;
-                    waiting = full; // TODO Should this implement non-blocking?
+                    waiting = op1[0] && full;
                   end
                 end else begin
                   push = 1; 
@@ -270,13 +270,24 @@ module machine (
                   new_val = 0;
                   waiting = op1[0] && full;
                 end
-              end else begin // PULL TODO No-op when auto-pull
+              end else begin // PULL TODO No-op when auto-pull?
                 if (op1[1]) begin // IfEmpty
                   if (osr_count >= osr_threshold) begin
-                    pull = 1;
-                    set_shift_out = !empty;
-                    new_val = din;
-                    waiting = empty; // TODO Should this implement non-blocking?
+                    if (op1[0]) begin // Blocking
+                      pull = 1;
+                      set_shift_out = !empty;
+                      new_val = din;
+                      waiting = empty;
+                    end else begin
+                      if (empty) begin // Copy X to OSR
+                        new_val = x;
+                        set_shift_out = 1;
+                      end else begin
+                        pull = 1;
+                        new_val = din;
+                        set_shift_out = 1;
+                      end
+                    end
                   end
                 end else begin
                   if (op1[0]) begin // Blocking
