@@ -181,168 +181,168 @@ module machine (
   
   // Execute the current instruction
   always @* begin
-      jmp  = 0;
-      pull = 0;
-      push = 0;
-      set_shift_in = 0;
-      set_shift_out = 0;
-      do_in_shift = 0;
-      do_out_shift = 0;
-      decx = 0;
-      decy = 0;
-      setx = 0;
-      sety = 0;
-      exec = 0;
-      waiting = 0;
-      auto = 0;
-      new_val = 0;
-      bit_count = 0;
-      set_set_pins = 0;
-      set_set_dirs = 0;
-      set_out_pins = 0;
-      set_out_dirs = 0;
-      set_in_pins = 0;
-      set_in_dirs = 0;
-      exec_instr = 0;
-      irq_flags_out = 0;
-      dout = 0;
-      if (enabled && !delaying) begin
-        case (op)
-          JMP:  begin
-                  new_val[4:0] = op2; 
-                  case (op1) // Condition
-                    0: jmp = 1;
-                    1: jmp = (x == 0);
-                    2: begin jmp = (x != 0); decx = (x != 0); end
-                    3: jmp = (y == 0);
-                    4: begin jmp = (y != 0); decy = (y != 0); end
-                    5: jmp = (x != y);
-                    6: jmp = jmp_pin;
-                    7: jmp = (osr_count < osr_threshold);
-                  endcase
-                end
-	  WAIT: case (op1[1:0]) // Source
-                  0: waiting = gpio_pins[op2] != op1[2];
-                  1: waiting = input_pins[op2] != op1[2];
-                  2: waiting = irq_flags_out[irq_index] != op1[2];
+    jmp  = 0;
+    pull = 0;
+    push = 0;
+    set_shift_in = 0;
+    set_shift_out = 0;
+    do_in_shift = 0;
+    do_out_shift = 0;
+    decx = 0;
+    decy = 0;
+    setx = 0;
+    sety = 0;
+    exec = 0;
+    waiting = 0;
+    auto = 0;
+    new_val = 0;
+    bit_count = 0;
+    set_set_pins = 0;
+    set_set_dirs = 0;
+    set_out_pins = 0;
+    set_out_dirs = 0;
+    set_in_pins = 0;
+    set_in_dirs = 0;
+    exec_instr = 0;
+    irq_flags_out = 0;
+    dout = 0;
+    if (enabled && !delaying) begin
+      case (op)
+        JMP:  begin
+                new_val[4:0] = op2; 
+                case (op1) // Condition
+                  0: jmp = 1;
+                  1: jmp = (x == 0);
+                  2: begin jmp = (x != 0); decx = (x != 0); end
+                  3: jmp = (y == 0);
+                  4: begin jmp = (y != 0); decy = (y != 0); end
+                  5: jmp = (x != y);
+                  6: jmp = jmp_pin;
+                  7: jmp = (osr_count < osr_threshold);
                 endcase
-          IN:   if (auto_push && isr_count >= isr_threshold) begin
-                   push = 1; 
-                   dout = in_shift; 
-                   new_val = 0; 
-                   bit_count = 0; 
-                   set_shift_in = !full; 
-                   waiting = full; 
-                   auto = 1;
-                end else case (op1) // Source
-                  0: begin do_in_shift = 1; new_val = input_pins; end
-                  1: begin do_in_shift = 1; new_val = x; end
-                  2: begin do_in_shift = 1; new_val = y; end
-                  3: begin do_in_shift = 1; new_val = null; end
-                  6: begin do_in_shift = 1; new_val = in_shift; end
-                  7: begin do_in_shift = 1; new_val = out_shift; end
-                endcase
-          OUT:  if (auto_pull && osr_count >= osr_threshold) begin
-                   pull = 1; new_val = din; set_shift_out = !empty; waiting = empty; auto = 1;
-                end else case (op1) // Destination
-                  0: begin do_out_shift = 1; new_val = out_shift; set_out_pins = 1; end                  // PINS
-                  1: begin do_out_shift = 1; new_val = out_shift; setx = 1; end                          // X
-                  2: begin do_out_shift = 1; new_val = out_shift; sety = 1; end                          // Y
-                  4: begin do_out_shift = 1; new_val = out_shift; set_out_dirs = 1; end                  // PINDIRS
-                  5: begin do_out_shift = 1; new_val = out_shift; jmp = 1; end                           // PC
-                  6: begin do_out_shift = 1; new_val = out_shift; bit_count = op2; set_shift_in = 1; end // ISR
-                  7: begin do_out_shift = 1; exec = 1; exec_instr = out_shift[15:0]; end                 // EXEC
-                endcase
-          PUSH: if (!op1[2]) begin // PUSH TODO Push IfFull
-                  push = 1; 
-                  dout = in_shift; 
-                  set_shift_in = !(op1[0] && full);  
-                  new_val = 0;
-                  waiting = op1[0] && full;
-                end else begin // PULL
-                  if (op1[1]) begin // IfEmpty
-                    if (osr_count >= osr_threshold) begin
-                      pull = 1;
-                      set_shift_out = !empty;
-                      new_val = din;
-                      waiting = empty;
-                    end
+              end
+        WAIT: case (op1[1:0]) // Source
+                0: waiting = gpio_pins[op2] != op1[2];
+                1: waiting = input_pins[op2] != op1[2];
+                2: waiting = irq_flags_out[irq_index] != op1[2];
+              endcase
+        IN:   if (auto_push && isr_count >= isr_threshold) begin
+                 push = 1; 
+                 dout = in_shift; 
+                 new_val = 0; 
+                 bit_count = 0; 
+                 set_shift_in = !full; 
+                 waiting = full; 
+                 auto = 1;
+              end else case (op1) // Source
+                0: begin do_in_shift = 1; new_val = input_pins; end
+                1: begin do_in_shift = 1; new_val = x; end
+                2: begin do_in_shift = 1; new_val = y; end
+                3: begin do_in_shift = 1; new_val = null; end
+                6: begin do_in_shift = 1; new_val = in_shift; end
+                7: begin do_in_shift = 1; new_val = out_shift; end
+              endcase
+        OUT:  if (auto_pull && osr_count >= osr_threshold) begin
+                 pull = 1; new_val = din; set_shift_out = !empty; waiting = empty; auto = 1;
+              end else case (op1) // Destination
+                0: begin do_out_shift = 1; new_val = out_shift; set_out_pins = 1; end                  // PINS
+                1: begin do_out_shift = 1; new_val = out_shift; setx = 1; end                          // X
+                2: begin do_out_shift = 1; new_val = out_shift; sety = 1; end                          // Y
+                4: begin do_out_shift = 1; new_val = out_shift; set_out_dirs = 1; end                  // PINDIRS
+                5: begin do_out_shift = 1; new_val = out_shift; jmp = 1; end                           // PC
+                6: begin do_out_shift = 1; new_val = out_shift; bit_count = op2; set_shift_in = 1; end // ISR
+                7: begin do_out_shift = 1; exec = 1; exec_instr = out_shift[15:0]; end                 // EXEC
+              endcase
+        PUSH: if (!op1[2]) begin // PUSH TODO Push IfFull
+                push = 1; 
+                dout = in_shift; 
+                set_shift_in = !(op1[0] && full);  
+                new_val = 0;
+                waiting = op1[0] && full;
+              end else begin // PULL
+                if (op1[1]) begin // IfEmpty
+                  if (osr_count >= osr_threshold) begin
+                    pull = 1;
+                    set_shift_out = !empty;
+                    new_val = din;
+                    waiting = empty;
+                  end
+                end else begin
+                  if (op1[0]) begin // Blocking
+                    pull = 1; 
+                    set_shift_out = !empty; 
+                    waiting = empty;
+                    new_val = din;
                   end else begin
-                    if (op1[0]) begin // Blocking
-                      pull = 1; 
-                      set_shift_out = !empty; 
-                      waiting = empty;
+                    if (empty) begin // Copy X to OSR
+                      new_val = x;
+                      set_shift_out = 1;
+                    end else begin // Pull value if available
+                      pull = 1;
                       new_val = din;
-                    end else begin
-                      if (empty) begin // Copy X to OSR
-                        new_val = x;
-                        set_shift_out = 1;
-                      end else begin // Pull value if available
-                        pull = 1;
-                        new_val = din;
-                        set_shift_out = 1;
-                      end
+                      set_shift_out = 1;
                     end
                   end
                 end
-          MOV:  case (op1)  // Destination TODO Status source and pins
-                  0: begin end // PINS
-                  1: case (op2[2:0]) // X                                                    // X
-                       2: begin new_val = bit_op(y, op2[4:3]); setx = 1; end                 // Y
-                       3: begin new_val = bit_op(null, op2[4:3]); setx = 1; end              // NULL
-                       6: begin new_val = bit_op(in_shift, op2[4:3]); setx = 1; end          // ISR
-                       7: begin new_val = bit_op(out_shift, op2[4:3]); setx = 1; end         // OSR
-                     endcase
-                  2: case (op2[2:0]) // Y
-                       1: begin new_val = bit_op(x, op2[4:3]); sety = 1; end                 // X
-                       3: begin new_val = bit_op(null, op2[4:3]); sety = 1; end              // NULL
-                       6: begin new_val = bit_op(in_shift, op2[4:3]); sety = 1; end          // ISR
-                       6: begin new_val = bit_op(out_shift, op2[4:3]); sety = 1; end         // OSR
-                     endcase
-                  4: case (op2[2:0]) // EXEC
-                       1: begin exec = 1; exec_instr = bit_op(x, op2[4:3]); end              // X
-                       2: begin exec = 1; exec_instr = bit_op(y, op2[4:3]); end              // Y
-                       3: begin exec = 1; exec_instr = bit_op(null, op2[4:3]); end           // NULL
-                       6: begin exec = 1; exec_instr = bit_op(in_shift, op2[4:3]); end       // ISR
-                       7: begin exec = 1; exec_instr = bit_op(out_shift, op2[4:3]); end      // OSR
-                     endcase
-                  5: case (op2[2:0]) // PC
-                       1: begin new_val = bit_op(x, op2[4:3]); jmp = 1; end                   // X
-                       2: begin new_val = bit_op(y, op2[4:3]); jmp = 1; end                   // Y
-                       3: begin new_val = bit_op(null, op2[4:3]); jmp = 1; end                // NULL
-                       6: begin new_val = bit_op(in_shift, op2[4:3]); jmp = 1; end            // ISR
-                       7: begin new_val = bit_op(out_shift, op2[4:3]); jmp = 1; end           // OSR
-                     endcase
-                  6: case (op2[2:0]) // ISR
-                       1: begin new_val = bit_op(x, op2[4:3]); set_shift_in = 1; end          // X
-                       2: begin new_val = bit_op(y, op2[4:3]); set_shift_in = 1; end          // Y
-                       3: begin new_val = bit_op(null, op2[4:3]); set_shift_in = 1; end       // NULL
-                       6: begin new_val = bit_op(in_shift, op2[4:3]); set_shift_in = 1; end   // ISR
-                       7: begin new_val = bit_op(out_shift, op2[4:3]); set_shift_in = 1; end  // OSR
-                     endcase
-                  7: case (op2[2:0]) // OSR
-                       1: begin new_val = bit_op(x, op2[4:3]); set_shift_out = 1; end         // X
-                       2: begin new_val = bit_op(y, op2[4:3]); set_shift_out = 1; end         // Y
-                       3: begin new_val = bit_op(null, op2[4:3]); set_shift_out = 1; end      // NULL
-                       6: begin new_val = bit_op(in_shift, op2[4:3]); set_shift_out = 1; end  // ISR
-                       7: begin new_val = bit_op(out_shift, op2[4:3]); set_shift_out = 1; end // OSR
-                     endcase
-                endcase
-          IRQ:  begin
-                  if (op1[1]) irq_flags_out[irq_index] = 0;           // CLEAR
-                  else begin
-                    irq_flags_out[irq_index] = 1;
-                    waiting = op1[0] && irq_flags_in[irq_index] != 0; // SET
-                  end
+              end
+        MOV:  case (op1)  // Destination TODO Status source and pins
+                0: begin end // PINS
+                1: case (op2[2:0]) // X                                                    // X
+                     2: begin new_val = bit_op(y, op2[4:3]); setx = 1; end                 // Y
+                     3: begin new_val = bit_op(null, op2[4:3]); setx = 1; end              // NULL
+                     6: begin new_val = bit_op(in_shift, op2[4:3]); setx = 1; end          // ISR
+                     7: begin new_val = bit_op(out_shift, op2[4:3]); setx = 1; end         // OSR
+                   endcase
+                2: case (op2[2:0]) // Y
+                     1: begin new_val = bit_op(x, op2[4:3]); sety = 1; end                 // X
+                     3: begin new_val = bit_op(null, op2[4:3]); sety = 1; end              // NULL
+                     6: begin new_val = bit_op(in_shift, op2[4:3]); sety = 1; end          // ISR
+                     6: begin new_val = bit_op(out_shift, op2[4:3]); sety = 1; end         // OSR
+                   endcase
+                4: case (op2[2:0]) // EXEC
+                     1: begin exec = 1; exec_instr = bit_op(x, op2[4:3]); end              // X
+                     2: begin exec = 1; exec_instr = bit_op(y, op2[4:3]); end              // Y
+                     3: begin exec = 1; exec_instr = bit_op(null, op2[4:3]); end           // NULL
+                     6: begin exec = 1; exec_instr = bit_op(in_shift, op2[4:3]); end       // ISR
+                     7: begin exec = 1; exec_instr = bit_op(out_shift, op2[4:3]); end      // OSR
+                   endcase
+                5: case (op2[2:0]) // PC
+                     1: begin new_val = bit_op(x, op2[4:3]); jmp = 1; end                   // X
+                     2: begin new_val = bit_op(y, op2[4:3]); jmp = 1; end                   // Y
+                     3: begin new_val = bit_op(null, op2[4:3]); jmp = 1; end                // NULL
+                     6: begin new_val = bit_op(in_shift, op2[4:3]); jmp = 1; end            // ISR
+                     7: begin new_val = bit_op(out_shift, op2[4:3]); jmp = 1; end           // OSR
+                   endcase
+                6: case (op2[2:0]) // ISR
+                     1: begin new_val = bit_op(x, op2[4:3]); set_shift_in = 1; end          // X
+                     2: begin new_val = bit_op(y, op2[4:3]); set_shift_in = 1; end          // Y
+                     3: begin new_val = bit_op(null, op2[4:3]); set_shift_in = 1; end       // NULL
+                     6: begin new_val = bit_op(in_shift, op2[4:3]); set_shift_in = 1; end   // ISR
+                     7: begin new_val = bit_op(out_shift, op2[4:3]); set_shift_in = 1; end  // OSR
+                   endcase
+                7: case (op2[2:0]) // OSR
+                     1: begin new_val = bit_op(x, op2[4:3]); set_shift_out = 1; end         // X
+                     2: begin new_val = bit_op(y, op2[4:3]); set_shift_out = 1; end         // Y
+                     3: begin new_val = bit_op(null, op2[4:3]); set_shift_out = 1; end      // NULL
+                     6: begin new_val = bit_op(in_shift, op2[4:3]); set_shift_out = 1; end  // ISR
+                     7: begin new_val = bit_op(out_shift, op2[4:3]); set_shift_out = 1; end // OSR
+                   endcase
+              endcase
+        IRQ:  begin
+                if (op1[1]) irq_flags_out[irq_index] = 0;           // CLEAR
+                else begin
+                  irq_flags_out[irq_index] = 1;
+                  waiting = op1[0] && irq_flags_in[irq_index] != 0; // SET
                 end
-          SET:  case (op1) // Destination
-                  0: set_set_pins = 1;                           // PINS
-                  1: begin setx = 1; new_val = {27'b0, op2}; end // X
-                  2: begin sety = 1; new_val = {27'b0, op2}; end // Y
-                  4: set_set_dirs = 1;                           // PINDIRS
-                endcase
-        endcase
-      end
+              end
+        SET:  case (op1) // Destination
+                0: set_set_pins = 1;                           // PINS
+                1: begin setx = 1; new_val = {27'b0, op2}; end // X
+                2: begin sety = 1; new_val = {27'b0, op2}; end // Y
+                4: set_set_dirs = 1;                           // PINDIRS
+              endcase
+      endcase
+    end
   end
 
   // Clock divider
