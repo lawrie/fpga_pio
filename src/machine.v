@@ -94,6 +94,7 @@ module machine (
   wire [2:0]  irq_index = {op2[2], irq_rel};
   wire [31:0] null = 0; // NULL source
   wire [5:0]  isr_count, osr_count;
+  wire [31:0] in_pins = input_pins << pins_in_base;
 
   // Values for use in gtkwave during simulation
   wire        pin0 = output_pins[0];
@@ -235,7 +236,7 @@ module machine (
                  waiting = full; 
                  auto = 1;
               end else case (op1) // Source
-                0: begin do_in_shift = 1; new_val = input_pins >> pins_in_base; end
+                0: begin do_in_shift = 1; new_val = in_pins; end
                 1: begin do_in_shift = 1; new_val = x; end
                 2: begin do_in_shift = 1; new_val = y; end
                 3: begin do_in_shift = 1; new_val = null; end
@@ -295,21 +296,24 @@ module machine (
                   end
                 end
               end
-        MOV:  case (op1)  // Destination TODO Status source and pins
+        MOV:  case (op1)  // Destination TODO Status source
                 0: begin end // PINS
-                1: case (op2[2:0]) // X                                                    // X
+                1: case (op2[2:0]) // X
+                     0: begin new_val = bit_op(in_pins, op[4:3]); setx = 1; end            // PINS
                      2: begin new_val = bit_op(y, op2[4:3]); setx = 1; end                 // Y
                      3: begin new_val = bit_op(null, op2[4:3]); setx = 1; end              // NULL
                      6: begin new_val = bit_op(in_shift, op2[4:3]); setx = 1; end          // ISR
                      7: begin new_val = bit_op(out_shift, op2[4:3]); setx = 1; end         // OSR
                    endcase
                 2: case (op2[2:0]) // Y
+                     0: begin new_val = bit_op(in_pins, op[4:3]); sety = 1; end            // PINS
                      1: begin new_val = bit_op(x, op2[4:3]); sety = 1; end                 // X
                      3: begin new_val = bit_op(null, op2[4:3]); sety = 1; end              // NULL
                      6: begin new_val = bit_op(in_shift, op2[4:3]); sety = 1; end          // ISR
                      6: begin new_val = bit_op(out_shift, op2[4:3]); sety = 1; end         // OSR
                    endcase
                 4: case (op2[2:0]) // EXEC
+                     0: begin exec = 1; exec_instr = bit_op(in_pins, op[4:3]); end         // PINS
                      1: begin exec = 1; exec_instr = bit_op(x, op2[4:3]); end              // X
                      2: begin exec = 1; exec_instr = bit_op(y, op2[4:3]); end              // Y
                      3: begin exec = 1; exec_instr = bit_op(null, op2[4:3]); end           // NULL
@@ -317,6 +321,7 @@ module machine (
                      7: begin exec = 1; exec_instr = bit_op(out_shift, op2[4:3]); end      // OSR
                    endcase
                 5: case (op2[2:0]) // PC
+                     0: begin new_val = bit_op(in_pins, op[4:3]); jmp = 1; end              // PINS
                      1: begin new_val = bit_op(x, op2[4:3]); jmp = 1; end                   // X
                      2: begin new_val = bit_op(y, op2[4:3]); jmp = 1; end                   // Y
                      3: begin new_val = bit_op(null, op2[4:3]); jmp = 1; end                // NULL
@@ -324,6 +329,7 @@ module machine (
                      7: begin new_val = bit_op(out_shift, op2[4:3]); jmp = 1; end           // OSR
                    endcase
                 6: case (op2[2:0]) // ISR
+                     0: begin new_val = bit_op(in_pins, op[4:3]); set_shift_in = 1; end     // PINS
                      1: begin new_val = bit_op(x, op2[4:3]); set_shift_in = 1; end          // X
                      2: begin new_val = bit_op(y, op2[4:3]); set_shift_in = 1; end          // Y
                      3: begin new_val = bit_op(null, op2[4:3]); set_shift_in = 1; end       // NULL
@@ -331,6 +337,7 @@ module machine (
                      7: begin new_val = bit_op(out_shift, op2[4:3]); set_shift_in = 1; end  // OSR
                    endcase
                 7: case (op2[2:0]) // OSR
+                     0: begin new_val = bit_op(in_pins, op[4:3]); set_shift_out = 1; end    // PINS
                      1: begin new_val = bit_op(x, op2[4:3]); set_shift_out = 1; end         // X
                      2: begin new_val = bit_op(y, op2[4:3]); set_shift_out = 1; end         // Y
                      3: begin new_val = bit_op(null, op2[4:3]); set_shift_out = 1; end      // NULL
