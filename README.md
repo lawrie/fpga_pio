@@ -50,7 +50,7 @@ You can select a different top-level module by, for example:
 make clean prog TOP=hello
 ```
 
-Current working top level modules include: blink, hello, wd2812, exec, uart_tx.
+Current working top level modules include: blink, hello, wds812, exec, uart_tx.
 
 ## Assembling programs
 
@@ -64,3 +64,83 @@ cd asm
 and then move square.mem to the src/top and/or the sim directory.
 
 The compiler is currently incomplete and so the .mem files sometimes need modification, e.g when the "'side_set opt" option is used.
+
+## Examples
+
+### Blink
+
+```
+.program blink
+    set pindirs 1
+again:
+    set pins 1 [31]  ; Drive pin high and then delay for 31 cycles
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    set pins 0 [30]  ; Drive pin low
+    nop [31]
+    nop [31]
+    nop [31]
+    nop [31]
+    jmp again
+```
+
+This blinks every 320 cycles. so with a maximum clock divider of 64K -1 (0xFFFF), and a 25MHz FPGA clock, it blinks approximately every 1.2 seconds.
+
+### Hello
+
+```
+.program uart_tx
+.side_set 1 opt
+    pull block    side 1
+    set x 7       side 0 [7]
+again:
+    out pins 1
+    jmp x-- again        [6]
+```
+
+This example outputs a message repeatedly on the console.
+
+### Exec
+
+The exec examples needs no PIO program as it executes a SET PINS instruction immediately. The machine does not need to be enabled.
+The top/exec.v Verilog module uses immediate execution to blink the led approximately once per second.
+
+### Pwm
+
+```
+.program pwm
+.side_set 1 opt
+    pull noblock    side 0
+    mov x osr
+    mov y isr
+countloop:
+    jmp x!=y noset
+    jmp skip        side 1
+noset:
+    nop
+skip:
+    jmp y-- countloop
+```
+
+The pwm example set the led off and then increases its brightness, repeatedly.
+
+### Neopixels
+
+```
+.program ws2812
+.side_set 1
+.wrap_target
+bitloop:
+  out x 1        side 0 [1]; Side-set still takes place when instruction stalls
+  jmp !x do_zero side 1 [1]; Branch on the bit we shifted out. Positive pulse
+do_one:
+  jmp  bitloop   side 1 [1]; Continue driving high, for a long pulse
+do_zero:
+  nop            side 0
+```
+
+![ws2812 example](https://raw.githubusercontent.com/lawrie/lawrie.github.io/master/images/ws2812.jpg)
+
+
