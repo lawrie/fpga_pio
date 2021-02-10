@@ -1,0 +1,6 @@
+200000001 // Set wrap
+700000100 // Set divider
+500000100 // Set pin groups
+800000000 // Set sideset bits
+600000001 // Enable machine 1
+
