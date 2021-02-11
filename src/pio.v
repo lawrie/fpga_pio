@@ -46,7 +46,8 @@ module pio (
 
   reg [3:0]   sideset_enable_bit;
   reg [3:0]   sideset_enabled;
-  reg [3:0]   shift_dir;
+  reg [3:0]   in_shift_dir;
+  reg [3:0]   out_shift_dir;
 
   reg [3:0]   push;
   reg [3:0]   pull;
@@ -95,7 +96,8 @@ module pio (
       jmp_pin <= 0;
       auto_pull <= 0;
       auto_push <= 0;
-      shift_dir <= 4'b1111;
+      out_shift_dir <= 4'b1111;
+      in_shift_dir <= 0;
       sideset_enabled <= 4'b1111;
       for(i=0;i<4;i++) begin
         div[i] <= 0; // no clock divider
@@ -149,16 +151,16 @@ module pio (
                 sideset_bits[mindex] <= din[4:0];
                 sideset_enabled[mindex] <= ~din[5];
               end
-       IMM  : imm <= 1;                          // Immediate instruction
-       //JMP  : jmp_pin <= din[3:0];               // Configure jump pins
-       APUSH: auto_push <= din[3:0];             // Configure auto_push
-       APULL: auto_pull <= din[3:0];             // Configure auto_pull
-       IPINS: initial_pins[mindex] <= din;       // Configure initial output pin values
-       IDIRS: initial_dirs[mindex] <= din;       // Configure initial pin directions
-       ISRT : isr_threshold[mindex] <= din[4:0]; // Configure auto_push threshold
-       OSRT : begin                              // Configure auto_pull threshold
+       IMM  : imm <= 1;                           // Immediate instruction
+       //JMP  : jmp_pin <= din[3:0];              // Configure jump pins
+       APUSH: auto_push <= din[3:0];              // Configure auto_push
+       APULL: auto_pull <= din[3:0];              // Configure auto_pull
+       IPINS: initial_pins[mindex] <= din;        // Configure initial output pin values
+       IDIRS: initial_dirs[mindex] <= din;        // Configure initial pin directions
+       ISRT : isr_threshold[mindex] <= din[4:0];  // Configure auto_push threshold
+       OSRT : begin                               // Configure auto_pull threshold
                 osr_threshold[mindex] <= din[4:0];
-                shift_dir[mindex] <= ~din[5];    // Shift direction is the getaion of bit 5
+                out_shift_dir[mindex] <= ~din[5]; // Shift direction is the negation of bit 5
               end
      endcase
     end
@@ -181,7 +183,8 @@ module pio (
         .pin_directions(pin_directions[j]),
         .sideset_bits(sideset_bits[j]),
         .sideset_enable_bit(sideset_bits[j] > 0 ? sideset_enabled[j] : 1'b0),
-        .shift_dir(shift_dir[j]),
+        .in_shift_dir(in_shift_dir[j]),
+        .out_shift_dir(out_shift_dir[j]),
         .div(div[j]),
         .instr(imm ? din[15:0] : instr[pstart[j] + pc[j]]),
         .imm(imm),
