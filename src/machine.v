@@ -88,13 +88,25 @@ module machine (
   wire [4:0]  delay;
   wire [4:0]  side_set;
   wire        sideset_enabled;
+  
+  // Names of operands
   wire        blocking = op1[0];
   wire        if_full = op1[1];
   wire        if_empty = op1[1];
-
-  // Miscellaneous signals
+  wire [2:0]  destination = op1;
+  wire [2:0]  source = op1;
+  wire [2:0]  condition = op1;
+  wire [1:0]  source2 = op1[1:0];
+  wire        polarity = op1[2];
+  wire [4:0]  index = op2;
+  wire [4:0]  address = op2;
+  wire [4:0]  data = op2;
   wire [1:0]  irq_rel = op2[4] ? mindex + op2[1:0] : op2[1:0];
   wire [2:0]  irq_index = {op2[2], irq_rel};
+  wire [2:0]  mov_source = op2[2:0];
+  wire [1:0]  mov_op = op2[4:3];
+
+  // Miscellaneous signals
   wire [31:0] null = 0; // NULL source
   wire [5:0]  isr_count, osr_count;
   wire [31:0] in_pins = input_pins << pins_in_base;
@@ -249,16 +261,16 @@ module machine (
           if (pins_side_count > i) output_pins[pins_side_base+i] <= side_set[i];
       if (set_set_pins)
         for (i=0;i<5;i++) 
-          if (pins_set_count > i) output_pins[pins_set_base+i] <= op2[i];
+          if (pins_set_count > i) output_pins[pins_set_base+i] <= data[i];
       if (set_set_dirs)
         for (i=0;i<5;i++) 
-          if (pins_set_count > i) pin_directions[pins_set_base+i] <= op2[i];
+          if (pins_set_count > i) pin_directions[pins_set_base+i] <= data[i];
       if (set_out_pins)
         for (i=0;i<5;i++) 
           if (pins_out_count > i) output_pins[pins_out_base+i] <= new_val[i];
       if (set_out_dirs)
         for (i=0;i<5;i++) 
-          if (pins_out_count > i) pin_directions[pins_out_base+i] <= op2[i];
+          if (pins_out_count > i) pin_directions[pins_out_base+i] <= data[i];
     end
   end
   
@@ -292,8 +304,8 @@ module machine (
     if (enabled && !delaying) begin
       case (op)
         JMP:  begin
-                new_val[4:0] = op2; 
-                case (op1) // Condition
+                new_val[4:0] = address; 
+                case (condition) // Condition
                   0: jmp = 1;
                   1: jmp = (x == 0);
                   2: begin jmp = (x != 0); decx = (x != 0); end
@@ -304,17 +316,17 @@ module machine (
                   7: jmp = (osr_count < osr_threshold);
                 endcase
               end
-        WAIT: case (op1[1:0]) // Source
-                0: waiting = gpio_pins[op2] != op1[2];
-                1: waiting = input_pins[pins_in_base + op2] != op1[2];
-                2: waiting = irq_flags_out[irq_index] != op1[2];
+        WAIT: case (source2) // Source
+                0: waiting = gpio_pins[index] != polarity;
+                1: waiting = input_pins[pins_in_base + index] != polarity;
+                2: waiting = irq_flags_out[irq_index] != polarity;
               endcase
-        IN:   if (auto_push && isr_count >= isr_threshold) begin
+        IN:   if (auto_push && isr_count >= isr_threshold) begin // Auto push
                  do_push();
                  set_isr(0); 
                  waiting = full; 
                  auto = 1;
-              end else case (op1) // Source
+              end else case (source) // Source
                 0: do_shift_in(in_pins);
                 1: do_shift_in(x);
                 2: do_shift_in(y);
@@ -322,11 +334,11 @@ module machine (
                 6: do_shift_in(in_shift);
                 7: do_shift_in(out_shift);
               endcase
-        OUT:  if (auto_pull && osr_count >= osr_threshold) begin
+        OUT:  if (auto_pull && osr_count >= osr_threshold) begin // Auto push
                  do_pull();
                  waiting = empty;
                  auto = 1;
-              end else case (op1) // Destination
+              end else case (destination) // Destination
                 0: begin do_out_shift = 1; new_val = out_shift; set_out_pins = 1; end                  // PINS
                 1: begin do_out_shift = 1; set_x(out_shift); end                                       // X
                 2: begin do_out_shift = 1; set_y(out_shift); end                                       // Y
@@ -374,66 +386,66 @@ module machine (
                   end
                 end
               end
-        MOV:  case (op1)  // Destination TODO Status source
+        MOV:  case (destination)  // Destination TODO Status source
                 0: begin end // PINS
-                1: case (op2[2:0]) // X
-                     0: set_x(bit_op(in_pins, op2[4:3]));      // PINS
-                     2: set_x(bit_op(y, op2[4:3]));            // Y
-                     3: set_x(bit_op(null, op2[4:3]));         // NULL
-                     6: set_x(bit_op(in_shift, op2[4:3]));     // ISR
-                     7: set_x(bit_op(out_shift, op2[4:3]));    // OSR
+                1: case (mov_source) // X
+                     0: set_x(bit_op(in_pins, mov_op));      // PINS
+                     2: set_x(bit_op(y, mov_op));            // Y
+                     3: set_x(bit_op(null, mov_op));         // NULL
+                     6: set_x(bit_op(in_shift, mov_op));     // ISR
+                     7: set_x(bit_op(out_shift, mov_op));    // OSR
                    endcase
-                2: case (op2[2:0]) // Y
-                     0: set_y(bit_op(in_pins, op2[4:3]));      // PINS
-                     1: set_y(bit_op(x, op2[4:3]));            // X
-                     3: set_y(bit_op(null, op2[4:3]));         // NULL
-                     6: set_y(bit_op(in_shift, op2[4:3]));     // ISR
-                     6: set_y(bit_op(out_shift, op2[4:3]));    // OSR
+                2: case (mov_source) // Y
+                     0: set_y(bit_op(in_pins, mov_op));      // PINS
+                     1: set_y(bit_op(x, mov_op));            // X
+                     3: set_y(bit_op(null, mov_op));         // NULL
+                     6: set_y(bit_op(in_shift, mov_op));     // ISR
+                     6: set_y(bit_op(out_shift, mov_op));    // OSR
                    endcase
-                4: case (op2[2:0]) // EXEC
-                     0: set_exec(bit_op(in_pins, op2[4:3]));   // PINS
-                     1: set_exec(bit_op(x, op2[4:3]));         // X
-                     2: set_exec(bit_op(y, op2[4:3]));         // Y
-                     3: set_exec(bit_op(null, op2[4:3]));      // NULL
-                     6: set_exec(bit_op(in_shift, op2[4:3]));  // ISR
-                     7: set_exec(bit_op(out_shift, op2[4:3])); // OSR
+                4: case (mov_source) // EXEC
+                     0: set_exec(bit_op(in_pins, mov_op));   // PINS
+                     1: set_exec(bit_op(x, mov_op));         // X
+                     2: set_exec(bit_op(y, mov_op));         // Y
+                     3: set_exec(bit_op(null, mov_op));      // NULL
+                     6: set_exec(bit_op(in_shift, mov_op));  // ISR
+                     7: set_exec(bit_op(out_shift, mov_op)); // OSR
                    endcase
-                5: case (op2[2:0]) // PC
-                     0: set_pc(bit_op(in_pins, op2[4:3]));     // PINS
-                     1: set_pc(bit_op(x, op2[4:3]));           // X
-                     2: set_pc(bit_op(y, op2[4:3]));           // Y
-                     3: set_pc(bit_op(null, op2[4:3]));        // NULL
-                     6: set_pc(bit_op(in_shift, op2[4:3]));    // ISR
-                     7: set_pc(bit_op(out_shift, op2[4:3]));   // OSR
+                5: case (mov_source) // PC
+                     0: set_pc(bit_op(in_pins, mov_op));     // PINS
+                     1: set_pc(bit_op(x, mov_op));           // X
+                     2: set_pc(bit_op(y, mov_op));           // Y
+                     3: set_pc(bit_op(null, mov_op));        // NULL
+                     6: set_pc(bit_op(in_shift, mov_op));    // ISR
+                     7: set_pc(bit_op(out_shift, mov_op));   // OSR
                    endcase
-                6: case (op2[2:0]) // ISR
-                     0: set_isr(bit_op(in_pins, op2[4:3]));    // PINS
-                     1: set_isr(bit_op(x, op2[4:3]));          // X
-                     2: set_isr(bit_op(y, op2[4:3]));          // Y
-                     3: set_isr(bit_op(null, op2[4:3]));       // NULL
-                     6: set_isr(bit_op(in_shift, op2[4:3]));   // ISR
-                     7: set_isr(bit_op(out_shift, op2[4:3]));  // OSR
+                6: case (mov_source) // ISR
+                     0: set_isr(bit_op(in_pins, mov_op));    // PINS
+                     1: set_isr(bit_op(x, mov_op));          // X
+                     2: set_isr(bit_op(y, mov_op));          // Y
+                     3: set_isr(bit_op(null, mov_op));       // NULL
+                     6: set_isr(bit_op(in_shift, mov_op));   // ISR
+                     7: set_isr(bit_op(out_shift, mov_op));  // OSR
                    endcase
-                7: case (op2[2:0]) // OSR
-                     0: set_osr(bit_op(in_pins, op2[4:3]));    // PINS
-                     1: set_osr(bit_op(x, op2[4:3]));          // X
-                     2: set_osr(bit_op(y, op2[4:3]));          // Y
-                     3: set_osr(bit_op(null, op2[4:3]));       // NULL
-                     6: set_osr(bit_op(in_shift, op2[4:3]));   // ISR
-                     7: set_osr(bit_op(out_shift, op2[4:3]));  // OSR
+                7: case (mov_source) // OSR
+                     0: set_osr(bit_op(in_pins, mov_op));    // PINS
+                     1: set_osr(bit_op(x, mov_op));          // X
+                     2: set_osr(bit_op(y, mov_op));          // Y
+                     3: set_osr(bit_op(null, mov_op));       // NULL
+                     6: set_osr(bit_op(in_shift, mov_op));   // ISR
+                     7: set_osr(bit_op(out_shift, mov_op));  // OSR
                    endcase
               endcase
         IRQ:  begin
                 if (op1[1]) irq_flags_out[irq_index] = 0;      // CLEAR
-                else begin
+                else begin                                     // SET
                   irq_flags_out[irq_index] = 1;
-                  waiting = blocking && irq_flags_in[irq_index] != 0; // SET
+                  waiting = blocking && irq_flags_in[irq_index] != 0; // If wait set, wait for irq cleared
                 end
               end
-        SET:  case (op1) // Destination
+        SET:  case (destination) // Destination
                 0: set_set_pins = 1;                           // PINS
-                1: set_x({27'b0, op2});                        // X
-                2: set_y({27'b0, op2});                        // Y
+                1: set_x({27'b0, data});                       // X
+                2: set_y({27'b0, data});                       // Y
                 4: set_set_dirs = 1;                           // PINDIRS
               endcase
       endcase
