@@ -211,6 +211,7 @@ module machine (
   task do_pull ();
     begin
       pull = 1;
+      set_shift_out = 1;
       new_val = din;
     end
   endtask
@@ -310,9 +311,7 @@ module machine (
               endcase
         IN:   if (auto_push && isr_count >= isr_threshold) begin
                  do_push();
-                 new_val = 0; 
-                 bit_count = 0; 
-                 set_shift_in = !full; 
+                 set_isr(0); 
                  waiting = full; 
                  auto = 1;
               end else case (op1) // Source
@@ -325,7 +324,6 @@ module machine (
               endcase
         OUT:  if (auto_pull && osr_count >= osr_threshold) begin
                  do_pull();
-                 set_shift_out = !empty;
                  waiting = empty;
                  auto = 1;
               end else case (op1) // Destination
@@ -341,14 +339,12 @@ module machine (
                 if (if_full) begin // IFFull
                   if (isr_count >= isr_threshold) begin
                     do_push();
-                    set_shift_in = !(blocking && full);
-                    new_val = 0;
+                    set_isr(0);
                     waiting = blocking && full;
                   end
                 end else begin
                   do_push();
-                  set_shift_in = !(blocking && full);  
-                  new_val = 0;
+                  set_isr(0);
                   waiting = blocking && full;
                 end
               end else begin // PULL TODO No-op when auto-pull?
@@ -356,28 +352,24 @@ module machine (
                   if (osr_count >= osr_threshold) begin
                     if (blocking) begin // Blocking
                       do_pull();
-                      set_shift_out = !empty;
                       waiting = empty;
                     end else begin
                       if (empty) begin // Copy X to OSR
                         set_osr(x);
                       end else begin
                         do_pull();
-                        set_shift_out = 1;
                       end
                     end
                   end
                 end else begin
                   if (blocking) begin // Blocking
                     do_pull();
-                    set_shift_out = !empty; 
                     waiting = empty;
                   end else begin
                     if (empty) begin // Copy X to OSR
                       set_osr(x);
                     end else begin // Pull value if available
                       do_pull();
-                      set_shift_out = 1;
                     end
                   end
                 end
@@ -512,7 +504,7 @@ module machine (
     .clk(clk),
     .penable(enabled),
     .reset(reset | restart),
-    .stalled(delaying),
+    .stalled(waiting ||delaying),
     .shift(op2),
     .set(set_shift_in),
     .do_shift(do_in_shift),
@@ -527,7 +519,7 @@ module machine (
     .clk(clk),
     .penable(enabled),
     .reset(reset | restart),
-    .stalled(delaying),
+    .stalled(waiting || delaying),
     .dir(shift_dir),
     .shift(op2),
     .set(set_shift_out),
