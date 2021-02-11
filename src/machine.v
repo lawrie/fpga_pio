@@ -348,32 +348,13 @@ module machine (
                 7: begin do_out_shift = 1; set_exec(out_shift[15:0]); end                              // EXEC
               endcase
         PUSH: if (!op1[2]) begin // PUSH TODO No-op when auto-push?
-                if (if_full) begin // IFFull
-                  if (isr_count >= isr_threshold) begin
-                    do_push();
-                    set_isr(0);
-                    waiting = blocking && full;
-                  end
-                end else begin
+                if (!if_full || (isr_count >= isr_threshold)) begin
                   do_push();
                   set_isr(0);
                   waiting = blocking && full;
                 end
               end else begin // PULL TODO No-op when auto-pull?
-                if (if_empty) begin // IfEmpty
-                  if (osr_count >= osr_threshold) begin
-                    if (blocking) begin // Blocking
-                      do_pull();
-                      waiting = empty;
-                    end else begin
-                      if (empty) begin // Copy X to OSR
-                        set_osr(x);
-                      end else begin
-                        do_pull();
-                      end
-                    end
-                  end
-                end else begin
+                if (!if_empty || (osr_count >= osr_threshold)) begin
                   if (blocking) begin // Blocking
                     do_pull();
                     waiting = empty;
@@ -387,7 +368,7 @@ module machine (
                 end
               end
         MOV:  case (destination)  // Destination TODO Status source
-                0: begin end // PINS
+                0: begin end // TODO PINS
                 1: case (mov_source) // X
                      0: set_x(bit_op(in_pins, mov_op));      // PINS
                      2: set_x(bit_op(y, mov_op));            // Y
