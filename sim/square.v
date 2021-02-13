@@ -37,7 +37,7 @@ module tb();
 
   wire [5:0] plen = 2;          // Program length
   wire [23:0] div = 24'h0280;   // Clock divider
-  wire [31:0] pin_grps = 32'h1; // SET group in pin 0
+  wire [31:0] pin_grps = 32'h1; // SET group is pin 0
 
   integer i;
 

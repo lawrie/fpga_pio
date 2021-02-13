@@ -36,23 +36,16 @@ module top (
 
   // Configuration of state machines and program instructions
   reg [15:0] program [0:31];
-  initial $readmemh("ws2812.mem", program);
+  initial $readmemh("square.mem", program);
 
   reg [35:0] conf [0:31];
-  wire [5:0] clen = 7; // Config length
-  initial $readmemh("ws_conf.mem", conf);
+  wire [5:0] clen = 4; // Config length
+  initial $readmemh("sq_conf.mem", conf);
 
   // State machine to send program to PIO and configure PIO state machines
   reg [1:0] state;
   reg [4:0] cindex;
   reg [4:0] pindex;
-
-  reg [11:0] delay_cnt;
-  reg [3:0] cp;
-  reg [2:0] stalled;
-  reg [4:0] pix_cnt;
-  reg [11:0] outer;
-  reg [3:0] target;
 
   always @(posedge clk_25mhz) begin
     if (reset) begin
@@ -64,7 +57,6 @@ module top (
       state <= 0;
       cindex <= 0;
       pindex <= 0;
-      stalled <= 0;
     end else begin
       case (state)
         0: begin // Send program to pio
@@ -86,25 +78,6 @@ module top (
              end
            end
         2: begin // Run state
-             if (full[0]) stalled <= stalled + 1;
-             delay_cnt <= delay_cnt + 1;
-             if (delay_cnt == 0 && !full[0] && pix_cnt <= 15) begin
-               action <= 4;  // PUSH
-               din = pix_cnt == target ? 32'h00ff0000 : 32'hff00ff00;
-             end else if (delay_cnt == 1) begin
-               action <= 0;
-             end else if (delay_cnt == 800) begin
-               if (pix_cnt < 16) begin
-                 pix_cnt <= pix_cnt + 1;
-               end else begin
-                 outer <= outer + 1;
-                 if (&outer) begin
-                   pix_cnt <= 0;
-                   target <= target + 1;
-                 end
-               end
-               delay_cnt <= 0;
-             end 
            end
       endcase
     end
@@ -129,8 +102,9 @@ module top (
   );
 
   // Led and gpio outpuy
-  assign led = ~stalled;
+  assign led = {reset, gpio_out[0]};
   assign gn[3] = gpio_out[0];
+  assign tx = 0;
 
 endmodule
 
