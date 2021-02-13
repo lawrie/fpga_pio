@@ -120,7 +120,7 @@ module top (
 
   // Led and gpio outpuy
   assign led = ~stalled;
-  assign gn[0] = gpio_out[0];
+  assign gn[3] = gpio_out[0];
 
 endmodule
 
