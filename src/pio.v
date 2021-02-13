@@ -21,6 +21,8 @@ module pio (
 
   reg         wrap;
   reg [3:0]   en;
+  reg [3:0]   restart;
+  reg [3:0]   clkdiv_restart;
   reg [3:0]   jmp_pin;
   reg [3:0]   auto_pull;
   reg [3:0]   auto_push;
@@ -93,6 +95,7 @@ module pio (
   always @(posedge clk) begin
     if (reset) begin
       en <= 0;
+      restart <= 0;
       jmp_pin <= 0;
       auto_pull <= 0;
       auto_push <= 0;
@@ -145,7 +148,11 @@ module pio (
                 pins_side_count[mindex] <= din[26:24];
                 pins_side_base[mindex]  <= din[31:27];
               end
-       EN   : en <= din[3:0];                    // Enable machines
+       EN   : begin                             // Enable machines
+                en <= din[3:0];                 // Equivalent of CTRL register
+                restart <= din[7:4];
+                clkdiv_restart <= din[11:8];
+              end
        DIV  : div[mindex] <= din[23:0];          // Configure clock dividers
        SIDES: begin                              // Configure side-set bits
                 sideset_bits[mindex] <= din[4:0];
@@ -174,7 +181,7 @@ module pio (
         .clk(clk),
         .reset(reset),
         .en(en[j]),
-        .restart(1'b0),
+        .restart(restart[j]),
         .mindex(j[1:0]),
         .jmp_pin(jmp_pin[j]),
         .gpio_pins(gpio_in),
