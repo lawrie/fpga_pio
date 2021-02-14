@@ -52,12 +52,9 @@ module tb();
   localparam DIV   = 7;
   localparam SIDES = 8;
   localparam IMM   = 9;
-  localparam APUSH = 10;
-  localparam APULL = 11;
-  localparam IPINS = 12;
-  localparam IDIRS = 13;
-  localparam ISRT  = 14;
-  localparam OSRT  = 15;
+  localparam SHIFT = 10;
+  localparam IPINS = 11;
+  localparam IDIRS = 12;
 
   // Task to send action to PIO
   task act (

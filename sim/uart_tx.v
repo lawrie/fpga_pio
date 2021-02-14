@@ -39,6 +39,7 @@ module tb();
   wire [23:0] div = 24'h0200;          // Clock divider
   wire [31:0] pin_grps = 32'h20100000; // OUT and SIDE grps pin 0
   wire [4:0]  sideset_bits = 1;        // Side-set bits
+
   integer i;
 
   // Actions
@@ -52,12 +53,9 @@ module tb();
   localparam DIV   = 7;
   localparam SIDES = 8;
   localparam IMM   = 9;
-  localparam APUSH = 10;
-  localparam APULL = 11;
-  localparam IPINS = 12;
-  localparam IDIRS = 13;
-  localparam ISRT  = 14;
-  localparam OSRT  = 15;
+  localparam SHIFT = 10;
+  localparam IPINS = 11;
+  localparam IDIRS = 12;
 
   // Task to send action to PIO
   task act (
@@ -98,6 +96,9 @@ module tb();
     // Configure side-set bits
     act(SIDES, sideset_bits);
 
+    // Configure shift out direction
+    act(SHIFT, 32'h00080000);
+
     // Enable machine 1
     act(EN, 1);
 
@@ -106,7 +107,6 @@ module tb();
     
     // Small gap
     repeat(2) @(posedge clk);
-
     for(i=0;i<10;i++) begin
       // Send numeric character
       act(PUSH, 32'h30 + i);

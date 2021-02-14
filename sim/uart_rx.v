@@ -5,20 +5,28 @@ module tb();
     $dumpfile("waves.vcd");
     $dumpvars(0, tb);
   end
-	
+
+  // Clock generation	
   reg clk;
   reg reset;
 
   initial begin
     clk = 1'b0;
   end
+ 
+  // 25MHz clock
+  always begin
+    #20 clk = !clk;
+  end
 
+  // PIO inputs
   reg [31:0]  din;
   reg [4:0]   index;
   reg [3:0]   action;
   reg [1:0]   mindex;
   reg [31:0]  gpio_in = 0; 
   
+  // PIO outputs
   wire [31:0] gpio_out; 
   wire[31:0]  gpio_dir; 
   wire [31:0] dout;
@@ -26,12 +34,7 @@ module tb();
   // Configuration
   // uart program
   reg [15:0] program [0:31];
-  initial begin
-    program[0] = 16'b001_00000_001_00000; // wait 0 pin 0
-    program[1] = 16'b111_01010_001_00111; // set x 7 [10]
-    program[2] = 16'b010_00000_000_00001; // in pins 1
-    program[3] = 16'b000_00110_010_00010; // jmp x-- 2 [6]
-  end
+  initial $readmemh("test.mem", program);
 
   wire [5:0]  plen = 4;                // Program length 4
   wire [23:0] div = 24'h0 ;            // Clock divider 0
@@ -40,69 +43,71 @@ module tb();
 
   integer i;
 
+  // Actions
+  localparam NONE  = 0;
+  localparam INSTR = 1;
+  localparam PEND  = 2;
+  localparam PULL  = 3;
+  localparam PUSH  = 4;
+  localparam GRPS  = 5;
+  localparam EN    = 6;
+  localparam DIV   = 7;
+  localparam SIDES = 8;
+  localparam IMM   = 9;
+  localparam SHIFT = 10;
+  localparam IPINS = 11;
+  localparam IDIRS = 12;
+
+  // Task to send action to PIO
+  task act (
+    input [3:0]  a,
+    input [31:0] d
+  );
+    begin
+      @(negedge clk);
+      action = a;
+      din = d;
+      @(posedge clk);
+    end
+  endtask
+
+  // Configure and run the PIO program
   initial begin
+    // Do reset
     reset = 1'b1;
-    repeat(2) @(posedge clk) ;
+    repeat(2) @(posedge clk);
     reset = 1'b0;
 
     // Set the instructions
-    action = 1;
-
     for(i=0;i<plen;i++) begin
       index = i;
-      din = program[i];
-
-      repeat(2) @(posedge clk);
+      act(INSTR, program[i]);
     end
 
     // Set wrap for machine 1
     mindex = 0;
-    action = 2;
-    din = plen - 1;
-
-    repeat(2) @(posedge clk);
+    act(PEND, plen - 1);
 
     // Set fractional clock divider
-    action = 7;
-    din  = div;
-
-    repeat(2) @(posedge clk);
+    act(DIV, div);
 
     // Set pin groups
-    action = 5;
-    din  = pin_grps;
-
-    repeat(2) @(posedge clk);
+    act(GRPS, pin_grps);
 
     // Configure side-set bits
-    action = 8;
-    din = sideset_bits;
+    act(SIDES, sideset_bits);
 
-    repeat(2) @(posedge clk);
-
-    // isr threshold
-    action = 14;
-    din = 8;
-
-    repeat(2) @(posedge clk);
-
-    // autopush
-    action = 10;
-    din = 1;
-
-    repeat(2) @(posedge clk);
+    // isr threshold and autopush
+    act(SHIFT, 32'h00000000);
 
     // Set input pin high
     gpio_in[0] = 1;
 
     // Enable machine 1
-    action = 6;
-    din = 1;
-
-    repeat(2) @(posedge clk);
+    act(EN, 1);
 
     // Configuration done
-    action = 0; 
+    act(NONE, 0);
     
     // Run for a while
     repeat(2) @(posedge clk);
@@ -124,19 +129,12 @@ module tb();
     repeat(20) @(posedge clk);
 
     // pull  
-    @(negedge clk);
-    action = 3;
-
-    @(negedge clk);
+    act(PULL, 1);
     
     action = 0;
     repeat(20) @(posedge clk);
     
     $finish;
-  end
-
-  always begin
-    #1 clk = !clk;
   end
 
   pio pio_1 (

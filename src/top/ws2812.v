@@ -39,7 +39,7 @@ module top (
   initial $readmemh("ws2812.mem", program);
 
   reg [35:0] conf [0:31];
-  wire [5:0] clen = 7; // Config length
+  wire [5:0] clen = 6; // Config length
   initial $readmemh("ws_conf.mem", conf);
 
   // State machine to send program to PIO and configure PIO state machines

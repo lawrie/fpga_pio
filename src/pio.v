@@ -83,12 +83,9 @@ module pio (
   localparam DIV   = 7;
   localparam SIDES = 8;
   localparam IMM   = 9;
-  localparam APUSH = 10;
-  localparam APULL = 11;
-  localparam IPINS = 12;
-  localparam IDIRS = 13;
-  localparam ISRT  = 14;
-  localparam OSRT  = 15;
+  localparam SHIFT = 10;
+  localparam IPINS = 11;
+  localparam IDIRS = 12;
 
   // Configure machines
   always @(posedge clk) begin
@@ -98,7 +95,7 @@ module pio (
       jmp_pin <= 0;
       auto_pull <= 0;
       auto_push <= 0;
-      out_shift_dir <= 4'b1111;
+      out_shift_dir <= 0;
       in_shift_dir <= 0;
       sideset_enabled <= 4'b1111;
       for(i=0;i<4;i++) begin
@@ -125,7 +122,7 @@ module pio (
      push <= 0;
      imm <= 0;
      case (action)
-       INSTR: instr[index] <= din[15:0];         // Set an instruction
+       INSTR: instr[index] <= din[15:0];         // Set an instruction. INSTR_MEM registers
        PEND : begin                              // Configure pstart, pend, wrap_target
                 pend[mindex] <= din[4:0];
                 pstart[mindex] <= din [9:5];
@@ -136,7 +133,7 @@ module pio (
                 dout <= pdout[mindex]; 
               end
        PUSH : push[mindex] <= 1;                 // Push a value to fifo
-       GRPS : begin                              // Configure pin groups
+       GRPS : begin                              // Configure pin groups. PIN_CTRL registers
                 pins_out_base[mindex]   <= din[4:0];
                 pins_set_base[mindex]   <= din[9:5];
                 pins_side_base[mindex]  <= din[14:10];
@@ -150,22 +147,23 @@ module pio (
                 restart <= din[7:4];
                 clkdiv_restart <= din[11:8];
               end
-       DIV  : div[mindex] <= din[23:0];          // Configure clock dividers
+       DIV  : div[mindex] <= din[23:0];          // Configure clock dividers. CLKDIV registers
        SIDES: begin                              // Configure side-set bits
                 sideset_bits[mindex] <= din[4:0];
                 sideset_enabled[mindex] <= ~din[5];
               end
        IMM  : imm <= 1;                           // Immediate instruction
        //JMP  : jmp_pin <= din[3:0];              // Configure jump pins
-       APUSH: auto_push <= din[3:0];              // Configure auto_push
-       APULL: auto_pull <= din[3:0];              // Configure auto_pull
+       SHIFT: begin
+                auto_push[mindex] <= din[16];     // SHIFT_CTRL
+                auto_pull[mindex] <= din[17];
+                in_shift_dir[mindex] <= din[18];
+                out_shift_dir[mindex] <= din[19];
+                isr_threshold[mindex] <= din[24:20];
+                osr_threshold[mindex] <= din[29:25];
+              end
        IPINS: initial_pins[mindex] <= din;        // Configure initial output pin values
        IDIRS: initial_dirs[mindex] <= din;        // Configure initial pin directions
-       ISRT : isr_threshold[mindex] <= din[4:0];  // Configure auto_push threshold
-       OSRT : begin                               // Configure auto_pull threshold
-                osr_threshold[mindex] <= din[4:0];
-                out_shift_dir[mindex] <= ~din[5]; // Shift direction is the negation of bit 5
-              end
      endcase
     end
   end

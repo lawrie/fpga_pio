@@ -39,7 +39,7 @@ module top (
   initial $readmemh("copybit.mem", program);
 
   reg [35:0] conf [0:31];
-  wire [5:0] clen = 5; // Config length
+  wire [5:0] clen = 6; // Config length
   initial $readmemh("copy_conf.mem", conf);
 
   // State machine to send program to PIO and configure PIO state machines

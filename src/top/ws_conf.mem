@@ -2,7 +2,6 @@
 700000535 // Set divider 5.208
 520000000 // Set pin group side
 800000021 // Set sideset bits and no enable
-F00000038 // autopull threshold 24 and shift left
-B00000001 // autopull
+A30020000 // autopull threshold 24 and shift left
 600000001 // Enable machine 1
 

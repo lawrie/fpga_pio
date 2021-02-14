@@ -39,6 +39,7 @@ module tb();
   wire [23:0] div = 24'h0535;           // Clock divider 25M / (6 * 800K)
   wire [31:0] pin_grps = 32'h20000000;  // SIDE grp pin 0
   wire [5:0]  sideset_bits = 6'b100001; // Side-set bits, enabled=0
+
   integer i;
 
   // Actions
@@ -52,12 +53,9 @@ module tb();
   localparam DIV   = 7;
   localparam SIDES = 8;
   localparam IMM   = 9;
-  localparam APUSH = 10;
-  localparam APULL = 11;
-  localparam IPINS = 12;
-  localparam IDIRS = 13;
-  localparam ISRT  = 14;
-  localparam OSRT  = 15;
+  localparam SHIFT = 10;
+  localparam IPINS = 11;
+  localparam IDIRS = 12;
 
   // Task to send action to PIO
   task act (
@@ -99,11 +97,8 @@ module tb();
     act(SIDES, sideset_bits);
 
     // Configure auto-pull 24 and shift direction left
-    act(OSRT, 6'b111000);
+    act(SHIFT, 32'h30020000);
 
-    // Configure auto-pull
-    act(APULL, 1);
-     
     // Enable machine 1
     act(EN, 1);
 

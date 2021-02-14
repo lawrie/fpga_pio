@@ -54,12 +54,9 @@ module tb();
   localparam DIV   = 7;
   localparam SIDES = 8;
   localparam IMM   = 9;
-  localparam APUSH = 10;
-  localparam APULL = 11;
-  localparam IPINS = 12;
-  localparam IDIRS = 13;
-  localparam ISRT  = 14;
-  localparam OSRT  = 15;
+  localparam SHIFT = 10;
+  localparam IPINS = 11;
+  localparam IDIRS = 12;
 
   // Task to send action to PIO
   task act (
@@ -100,17 +97,8 @@ module tb();
     // Configure side-set bits
     act(SIDES, sideset_bits);
 
-    // Configure autopull threshold and shift direction
-    act(OSRT, 6'b101000);
-
-    // Configure autopush threshold
-    act(ISRT, 8);
-
-    // Configure auto-pull
-    act(APULL, 1);
-
-    // Configure auto-push
-    act(APUSH, 1);
+    // Configure shift control
+    act(SHIFT, 32'h10830000); // Auto pull and push, left shift, thresholds 8
 
     // Enable machine 1
     act(EN, 1);
