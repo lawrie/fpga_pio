@@ -30,6 +30,8 @@ module tb();
   wire [31:0] gpio_out; 
   wire[31:0]  gpio_dir; 
   wire [31:0] dout;
+  wire [3:0]  full;
+  wire [3:0]  empty;
 
   // Configuration
   reg [15:0] program [0:31];
@@ -37,7 +39,7 @@ module tb();
 
   wire [5:0] plen = 2;                 // Program length
   wire [23:0] div = 24'h0280;          // Clock divider
-  wire [31:0] pin_grps = 32'h04000000; // SET group in pin 0
+  wire [31:0] pin_grps = 32'h04000000; // SET group is pin 0
 
   integer i;
 
@@ -114,7 +116,9 @@ module tb();
     .dout(dout),
     .gpio_in(gpio_in),
     .gpio_out(gpio_out),
-    .gpio_dir(gpio_dir)
+    .gpio_dir(gpio_dir),
+    .full(full),
+    .empty(empty)
   );
 
 endmodule 

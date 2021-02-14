@@ -30,6 +30,8 @@ module tb();
   wire [31:0] gpio_out; 
   wire[31:0]  gpio_dir; 
   wire [31:0] dout;
+  wire [3:0]  full;
+  wire [3:0]  empty;
 
   // Configuration
   // uart program
@@ -147,7 +149,9 @@ module tb();
     .dout(dout),
     .gpio_in(gpio_in),
     .gpio_out(gpio_out),
-    .gpio_dir(gpio_dir)
+    .gpio_dir(gpio_dir),
+    .full(full),
+    .empty(empty)
   );
 
 endmodule 
