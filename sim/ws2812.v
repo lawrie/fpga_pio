@@ -40,7 +40,7 @@ module tb();
   wire [5:0]  plen = 4;                 // Program length
   wire [23:0] div = 24'h0535;           // Clock divider 25M / (6 * 800K)
   wire [31:0] pin_grps = 32'h20000000;  // SIDE grp pin 0
-  wire [5:0]  sideset_bits = 6'b100001; // Side-set bits, enabled=0
+  wire [31:0] exec_ctrl = 32'h00003000; // Wrap top
 
   integer i;
 
@@ -87,16 +87,13 @@ module tb();
 
     // Set wrap for machine 1
     mindex = 0;
-    act(PEND, plen - 1);
+    act(PEND, exec_ctrl);
 
     // Set fractional clock divider
     act(DIV, div);
     
     // Set pin groups
     act(GRPS, pin_grps);
-
-    // Configure side-set bits
-    act(SIDES, sideset_bits);
 
     // Configure auto-pull 24 and shift direction left
     act(SHIFT, 32'h30020000);

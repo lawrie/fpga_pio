@@ -1,4 +1,4 @@
-200000001 // Set wrap
+200001000 // Set wrap
 700000100 // Set divider
 500100000 // Set pin groups, OUT pin 0
 A00080000 // Shift out direction right

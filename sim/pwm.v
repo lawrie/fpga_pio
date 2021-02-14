@@ -37,10 +37,11 @@ module tb();
   reg [15:0] program [0:31];
   initial $readmemh("pwm.mem", program);
 
-  wire [5:0]  plen = 7;                // Program length
-  wire [23:0] div = 24'h0280;          // Clock divider
-  wire [31:0] pin_grps = 32'h20000000; // SIDE grp pin 0
-  wire [4:0]  sideset_bits = 1;        // Side-set bits
+  wire [5:0]  plen = 7;                 // Program length
+  wire [23:0] div = 24'h0280;           // Clock divider
+  wire [31:0] pin_grps = 32'h40000000;  // SIDE grp pin 0
+  wire [31:0] exec_ctrl = 32'h40006000; // Wrap top and sideset enable bit
+
   integer i;
 
   // Actions
@@ -86,16 +87,13 @@ module tb();
 
     // Set wrap for machine 1
     mindex = 0;
-    act(PEND, plen - 1);
+    act(PEND, exec_ctrl);
 
     // Set fractional clock divider
     act(DIV, div);
     
     // Set pin groups
     act(GRPS, pin_grps);
-
-    // Configure side-set bits
-    act(SIDES, sideset_bits);
 
     // Push the period
     act(PUSH, 10);

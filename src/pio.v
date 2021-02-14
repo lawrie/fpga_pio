@@ -23,7 +23,6 @@ module pio (
   reg [3:0]   en;
   reg [3:0]   restart;
   reg [3:0]   clkdiv_restart;
-  reg [3:0]   jmp_pin;
   reg [3:0]   auto_pull;
   reg [3:0]   auto_push;
   reg         imm;
@@ -44,11 +43,18 @@ module pio (
   reg [31:0]  initial_dirs    [0:3];
   reg [4:0]   isr_threshold   [0:3];
   reg [4:0]   osr_threshold   [0:3];
+  reg [3:0]   status_n        [0:3];
+  reg [4:0]   out_en_sel      [0:3];  
+  reg [4:0]   jmp_pin         [0:3];
 
   reg [3:0]   sideset_enable_bit;
-  reg [3:0]   sideset_enabled;
   reg [3:0]   in_shift_dir;
   reg [3:0]   out_shift_dir;
+  reg [3:0]   status_sel;
+  reg [3:0]   out_sticky;
+  reg [3:0]   inline_out_en;
+  reg [3:0]   side_pindir;
+  reg [3:0]   exec_stalled;
 
   reg [3:0]   push;
   reg [3:0]   pull;
@@ -92,12 +98,16 @@ module pio (
     if (reset) begin
       en <= 0;
       restart <= 0;
-      jmp_pin <= 0;
       auto_pull <= 0;
       auto_push <= 0;
       out_shift_dir <= 0;
       in_shift_dir <= 0;
-      sideset_enabled <= 4'b1111;
+      status_sel <= 0;
+      out_sticky <= 0;
+      inline_out_en <= 0;
+      side_pindir <= 0;
+      sideset_enable_bit <= 0;
+      exec_stalled <= 0;
       for(i=0;i<4;i++) begin
         div[i] <= 0; // no clock divider
         pend[i] <= 0;
@@ -115,6 +125,9 @@ module pio (
         initial_dirs[i] <= 0;
         isr_threshold[i] <= 0;
         osr_threshold[i] <= 0;
+        status_n[i] <= 0;
+        out_en_sel[i] <= 0;
+        jmp_pin[i] <= 0;
       end
     end else begin
      wrap <= 0;
@@ -123,10 +136,18 @@ module pio (
      imm <= 0;
      case (action)
        INSTR: instr[index] <= din[15:0];         // Set an instruction. INSTR_MEM registers
-       PEND : begin                              // Configure pstart, pend, wrap_target
-                pend[mindex] <= din[4:0];
-                pstart[mindex] <= din [9:5];
-                wrap_target[mindex] <= din[14:10];
+       PEND : begin                              // Configure pend, wrap_target, etc.
+                status_n[mindex] <= din[3:0];
+                status_sel[mindex] <= din[4];
+                wrap_target[mindex] <= din[11:7];
+                pend[mindex] <= din[16:12];
+                out_sticky[mindex] <= din[17];
+                inline_out_en[mindex] <= din[18];
+                out_en_sel[mindex] <= din[23:19];
+                jmp_pin[mindex] <= din[28:24];
+                side_pindir[mindex] <= din[29];
+                sideset_enable_bit[mindex] <= din[30];
+                exec_stalled[mindex] <= din[31];
               end
        PULL : begin                              // Pull value from fifo 
                 pull[mindex] <= 1; 
@@ -148,12 +169,7 @@ module pio (
                 clkdiv_restart <= din[11:8];
               end
        DIV  : div[mindex] <= din[23:0];          // Configure clock dividers. CLKDIV registers
-       SIDES: begin                              // Configure side-set bits
-                sideset_bits[mindex] <= din[4:0];
-                sideset_enabled[mindex] <= ~din[5];
-              end
        IMM  : imm <= 1;                           // Immediate instruction
-       //JMP  : jmp_pin <= din[3:0];              // Configure jump pins
        SHIFT: begin
                 auto_push[mindex] <= din[16];     // SHIFT_CTRL
                 auto_pull[mindex] <= din[17];
@@ -183,7 +199,7 @@ module pio (
         .input_pins(gpio_in),
         .output_pins(output_pins[j]),
         .pin_directions(pin_directions[j]),
-        .sideset_enable_bit(sideset_bits[j] > 0 ? sideset_enabled[j] : 1'b0),
+        .sideset_enable_bit(pins_side_count[j] > 0 ? sideset_enable_bit[j] : 1'b0),
         .in_shift_dir(in_shift_dir[j]),
         .out_shift_dir(out_shift_dir[j]),
         .div(div[j]),

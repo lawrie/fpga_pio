@@ -40,6 +40,7 @@ module tb();
   wire [5:0] plen = 2;                 // Program length
   wire [23:0] div = 24'h0280;          // Clock divider
   wire [31:0] pin_grps = 32'h04000000; // SET group is pin 0
+  wire [31:0] exec_ctrl = 32'h00001000; // Wrap top
 
   integer i;
 
@@ -86,7 +87,7 @@ module tb();
 
     // Set wrap for machine 1
     mindex = 0;
-    act(PEND, plen - 1);
+    act(PEND, exec_ctrl);
 
     // Set fractional clock divider
     act(DIV, div);

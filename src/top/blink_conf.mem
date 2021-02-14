@@ -1,4 +1,4 @@
-20000000c // Set wrap
+20000c000 // Set wrap
 700ffff00 // Set divider
 504000000 // Set pin groups, SET pin 0
 600000001 // Enable machine 1

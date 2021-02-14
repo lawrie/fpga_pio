@@ -41,6 +41,7 @@ module tb();
   wire [5:0]  plen = 4;                // Program length 4
   wire [23:0] div = 24'h0 ;            // Clock divider 0
   wire [31:0] pin_grps = 32'h20100000; // OUT and SIDE groups both GPIO 0
+  wire [31:0] exec_ctrl = 32'h00003000; // Wrap top
 
   integer i;
 
@@ -87,7 +88,7 @@ module tb();
 
     // Set wrap for machine 1
     mindex = 0;
-    act(PEND, plen - 1);
+    act(PEND, exec_ctrl);
 
     // Set fractional clock divider
     act(DIV, div);

@@ -18,7 +18,7 @@ module machine (
   input [1:0]   mindex,
   input [4:0]   pend,
   input [4:0]   wrap_target,
-  input         jmp_pin,
+  input [4:0]   jmp_pin,
   input         sideset_enable_bit,
   input [4:0]   pins_out_base,
   input [5:0]   pins_out_count,

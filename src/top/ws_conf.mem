@@ -1,7 +1,6 @@
-200000003 // Set wrap
+200003000 // Set wrap
 700000535 // Set divider 5.208
 520000000 // Set pin group side
-800000021 // Set sideset bits and no enable
 A30020000 // autopull threshold 24 and shift left
 600000001 // Enable machine 1
 
