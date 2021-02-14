@@ -39,7 +39,7 @@ module tb();
 
   wire [5:0]  plen = 2;                 // Program length
   wire [23:0] div = 24'h0C80;           // Clock divider for 1MHz
-  wire [31:0] pin_grps = 32'h01110900;  // SIDE grp pin 0, OUT pin 1
+  wire [31:0] pin_grps = 32'h20100001;  // SIDE grp pin 0, OUT pin 1
   wire [5:0]  sideset_bits = 6'b100001; // Side-set bits
   integer i;
 

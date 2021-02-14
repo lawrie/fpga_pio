@@ -33,9 +33,8 @@ module pio (
   reg [4:0]   wrap_target     [0:3];
   reg [23:0]  div             [0:3];
   reg [4:0]   pins_in_base    [0:3];
-  reg [2:0]   pins_in_count   [0:3];
   reg [4:0]   pins_out_base   [0:3];
-  reg [2:0]   pins_out_count  [0:3];
+  reg [5:0]   pins_out_count  [0:3];
   reg [4:0]   pins_set_base   [0:3];
   reg [2:0]   pins_set_count  [0:3];
   reg [4:0]   pins_side_base  [0:3];
@@ -107,11 +106,10 @@ module pio (
         pend[i] <= 0;
         pstart[i] <= 0;
         wrap_target[i] <= 0;
-        pins_in_count[i] <= 0;
         pins_in_base[i] <= 0;
         pins_out_count[i] <= 0;
         pins_out_base[i] <= 0;
-        pins_set_count[i] <= 0;
+        pins_set_count[i] <= 5;
         pins_set_base[i] <= 0;
         pins_side_count[i] <= 0;
         pins_side_base[i] <= 0;
@@ -139,14 +137,13 @@ module pio (
               end
        PUSH : push[mindex] <= 1;                 // Push a value to fifo
        GRPS : begin                              // Configure pin groups
-                pins_set_count[mindex]  <= din[2:0];
-                pins_set_base[mindex]   <= din[7:3];
-                pins_out_count[mindex]  <= din[10:8];
-                pins_out_base[mindex]   <= din[15:11];
-                pins_in_count[mindex]   <= din[18:16];
-                pins_in_base[mindex]    <= din[23:19];
-                pins_side_count[mindex] <= din[26:24];
-                pins_side_base[mindex]  <= din[31:27];
+                pins_out_base[mindex]   <= din[4:0];
+                pins_set_base[mindex]   <= din[9:5];
+                pins_side_base[mindex]  <= din[14:10];
+                pins_in_base[mindex]    <= din[19:15];
+                pins_out_count[mindex]  <= din[25:20];
+                pins_set_count[mindex]  <= din[28:26];
+                pins_side_count[mindex] <= din[31:29];
               end
        EN   : begin                             // Enable machines
                 en <= din[3:0];                 // Equivalent of CTRL register
@@ -202,7 +199,6 @@ module pio (
         .pins_set_base(pins_set_base[j]),
         .pins_set_count(pins_set_count[j]),
         .pins_in_base(pins_in_base[j]),
-        .pins_in_count(pins_in_count[j]),
         .pins_side_base(pins_side_base[j]),
         .pins_side_count(pins_side_count[j]),
         .auto_pull(auto_pull[j]),

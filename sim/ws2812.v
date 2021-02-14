@@ -37,7 +37,7 @@ module tb();
 
   wire [5:0]  plen = 4;                 // Program length
   wire [23:0] div = 24'h0535;           // Clock divider 25M / (6 * 800K)
-  wire [31:0] pin_grps = 32'h01000000;  // SIDE grp pin 0
+  wire [31:0] pin_grps = 32'h20000000;  // SIDE grp pin 0
   wire [5:0]  sideset_bits = 6'b100001; // Side-set bits, enabled=0
   integer i;
 

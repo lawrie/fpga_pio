@@ -22,11 +22,10 @@ module machine (
   input [2:0]   sideset_bits,
   input         sideset_enable_bit,
   input [4:0]   pins_out_base,
-  input [2:0]   pins_out_count,
+  input [5:0]   pins_out_count,
   input [4:0]   pins_set_base,
   input [2:0]   pins_set_count,
   input [4:0]   pins_in_base,
-  input [2:0]   pins_in_count, // TODO Is this needed?
   input [4:0]   pins_side_base,
   input [2:0]   pins_side_count,
   input         out_shift_dir,
