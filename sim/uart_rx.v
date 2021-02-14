@@ -41,7 +41,6 @@ module tb();
   wire [5:0]  plen = 4;                // Program length 4
   wire [23:0] div = 24'h0 ;            // Clock divider 0
   wire [31:0] pin_grps = 32'h20100000; // OUT and SIDE groups both GPIO 0
-  wire [4:0]  sideset_bits = 0;        // Side set bits 
 
   integer i;
 
@@ -95,9 +94,6 @@ module tb();
 
     // Set pin groups
     act(GRPS, pin_grps);
-
-    // Configure side-set bits
-    act(SIDES, sideset_bits);
 
     // isr threshold and autopush
     act(SHIFT, 32'h00000000);

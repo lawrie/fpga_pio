@@ -183,7 +183,6 @@ module pio (
         .input_pins(gpio_in),
         .output_pins(output_pins[j]),
         .pin_directions(pin_directions[j]),
-        .sideset_bits(sideset_bits[j]),
         .sideset_enable_bit(sideset_bits[j] > 0 ? sideset_enabled[j] : 1'b0),
         .in_shift_dir(in_shift_dir[j]),
         .out_shift_dir(out_shift_dir[j]),

@@ -19,7 +19,6 @@ module machine (
   input [4:0]   pend,
   input [4:0]   wrap_target,
   input         jmp_pin,
-  input [2:0]   sideset_bits,
   input         sideset_enable_bit,
   input [4:0]   pins_out_base,
   input [5:0]   pins_out_count,
@@ -444,7 +443,7 @@ module machine (
   // Instruction decoder
   decoder decode (
     .instr(exec1 ? exec1_instr : instr),
-    .sideset_bits(sideset_bits),
+    .sideset_bits(pins_side_count),
     .sideset_enable_bit(sideset_enable_bit),
     .sideset_enabled(sideset_enabled),
     .op(op),

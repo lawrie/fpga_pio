@@ -39,7 +39,7 @@ module top (
   initial $readmemh("pwm.mem", program);
 
   reg [35:0] conf [0:31];
-  wire [5:0] clen = 11; // Config length
+  wire [5:0] clen = 10; // Config length
   initial $readmemh("pwm_conf.mem", conf);
 
   // State machine to send program to PIO and configure PIO state machines

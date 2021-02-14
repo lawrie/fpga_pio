@@ -36,10 +36,10 @@ module top (
 
   // Configuration of state machines and program instructions
   reg [15:0] program [0:31];
-  initial $readmemh("test.mem", program);
+  initial $readmemh("blink.mem", program);
 
   reg [35:0] conf [0:31];
-  wire [5:0] clen = 4; // Config length
+  wire [5:0] clen = 3; // Config length
   initial $readmemh("exec_conf.mem", conf);
 
   // State machine to send program to PIO and configure PIO state machines

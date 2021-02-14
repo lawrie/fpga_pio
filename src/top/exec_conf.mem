@@ -1,5 +1,4 @@
 20000000c // Set wrap
 700ffff00 // Set divider
 504000000 // Set pin groups, OUT pin 0
-800000000 // Set sideset bits
 

@@ -1,7 +1,6 @@
 200000001 // Set wrap
 700000100 // Set divider
 500100000 // Set pin groups, OUT pin 0
-800000000 // Set sideset bits
 A00080000 // Shift out direction right
 600000001 // Enable machine 1
 
