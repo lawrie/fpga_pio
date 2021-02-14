@@ -200,8 +200,6 @@ module pio (
         .pins_side_count(pins_side_count[j]),
         .auto_pull(auto_pull[j]),
         .auto_push(auto_push[j]),
-        .initial_pins(initial_pins[j]),
-        .initial_dirs(initial_dirs[j]),
         .isr_threshold(isr_threshold[j]),
         .osr_threshold(osr_threshold[j]),
         .irq_flags_in(8'h0),

@@ -33,8 +33,6 @@ module machine (
   input         auto_push,
   input [4:0]   isr_threshold,
   input [4:0]   osr_threshold,
-  input [31:0]  initial_pins,
-  input [31:0]  initial_dirs,
 
   // Output
   output [4:0]  pc,
