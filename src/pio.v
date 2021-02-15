@@ -33,6 +33,7 @@ module pio #(
   reg [NUM_MACHINES-1:0]   inline_out_en;
   reg [NUM_MACHINES-1:0]   side_pindir;
   reg [NUM_MACHINES-1:0]   exec_stalled;
+  reg [NUM_MACHINES-1:0]   use_divider;
 
   // Control
   reg [NUM_MACHINES-1:0]   imm;
@@ -163,7 +164,10 @@ module pio #(
                  restart <= din[7:4];
                  clkdiv_restart <= din[11:8];
                end
-        DIV  : div[mindex] <= din[23:0];          // Configure clock dividers. CLKDIV registers
+        DIV  : begin
+                 div[mindex] <= din[23:0];        // Configure clock dividers. CLKDIV registers
+                 use_divider[mindex] <= din[23:0] >= 24'h200;  // Use divider if clock divider is 2 or more
+               end
         IMM  : imm[mindex] <= 1;                  // Immediate instruction
         SHIFT: begin
                  auto_push[mindex] <= din[16];    // SHIFT_CTRL
@@ -196,6 +200,7 @@ module pio #(
         .in_shift_dir(in_shift_dir[j]),
         .out_shift_dir(out_shift_dir[j]),
         .div(div[j]),
+        .use_divider(use_divider[j]),
         .instr(imm[j] ? din[15:0] : instr[pstart[j] + pc[j]]),
         .imm(imm[j]),
         .pend(pend[j]),

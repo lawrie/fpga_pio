@@ -4,6 +4,7 @@ module machine (
   input         reset,
   input         en,
   input [23:0]  div,
+  input         use_divider,
   input [31:0]  din,
   input [15:0]  instr,
   input [31:0]  input_pins,
@@ -429,6 +430,7 @@ module machine (
     .clk(clk),
     .reset(reset | restart),
     .div(div),
+    .use_divider(use_divider),
     .penable(penable)
   );
 

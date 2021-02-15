@@ -3,6 +3,7 @@ module divider (
   input         clk,
   input         reset,
   input [23:0]  div,
+  input         use_divider,
   output        penable
 );
 
@@ -14,11 +15,10 @@ module divider (
     if (reset) begin
       div_counter <= 0;
       pen <= 1;
+      old_pen <= 0;
     end else begin
-      old_pen <= pen;
-      if (div < 23'h200) // normal clock if divider less than 2
-        pen <= 1;
-      else begin
+      if (use_divider) begin
+        old_pen <= pen;
         div_counter <= div_counter + 256;
         if (div_counter >= div - 256)
           div_counter <= div_counter - (div - 256);
@@ -27,7 +27,7 @@ module divider (
     end
   end
 
-  assign penable = div < 24'h200 || (pen & ~old_pen);
+  assign penable = pen & ~old_pen;
 
 endmodule
 
