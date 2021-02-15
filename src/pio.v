@@ -19,13 +19,12 @@ module pio (
   // Shared instructions memory
   reg [15:0]  instr [0:31];
 
-  reg         wrap;
   reg [3:0]   en;
   reg [3:0]   restart;
   reg [3:0]   clkdiv_restart;
   reg [3:0]   auto_pull;
   reg [3:0]   auto_push;
-  reg         imm;
+  reg [3:0]   imm;
   
   reg [4:0]   pstart          [0:3];
   reg [4:0]   pend            [0:3];
@@ -38,9 +37,6 @@ module pio (
   reg [2:0]   pins_set_count  [0:3];
   reg [4:0]   pins_side_base  [0:3];
   reg [2:0]   pins_side_count [0:3];
-  reg [2:0]   sideset_bits    [0:3];
-  reg [31:0]  initial_pins    [0:3];
-  reg [31:0]  initial_dirs    [0:3];
   reg [4:0]   isr_threshold   [0:3];
   reg [4:0]   osr_threshold   [0:3];
   reg [3:0]   status_n        [0:3];
@@ -90,8 +86,6 @@ module pio (
   localparam SIDES = 8;
   localparam IMM   = 9;
   localparam SHIFT = 10;
-  localparam IPINS = 11;
-  localparam IDIRS = 12;
 
   // Configure machines
   always @(posedge clk) begin
@@ -120,9 +114,6 @@ module pio (
         pins_set_base[i] <= 0;
         pins_side_count[i] <= 0;
         pins_side_base[i] <= 0;
-        sideset_bits[i] <= 0;
-        initial_pins[i] <= 0;
-        initial_dirs[i] <= 0;
         isr_threshold[i] <= 0;
         osr_threshold[i] <= 0;
         status_n[i] <= 0;
@@ -130,7 +121,6 @@ module pio (
         jmp_pin[i] <= 0;
       end
     end else begin
-     wrap <= 0;
      pull <= 0;
      push <= 0;
      imm <= 0;
@@ -163,23 +153,21 @@ module pio (
                 pins_set_count[mindex]  <= din[28:26];
                 pins_side_count[mindex] <= din[31:29];
               end
-       EN   : begin                             // Enable machines
-                en <= din[3:0];                 // Equivalent of CTRL register
+       EN   : begin                              // Enable machines
+                en <= din[3:0];                  // Equivalent of CTRL register
                 restart <= din[7:4];
                 clkdiv_restart <= din[11:8];
               end
        DIV  : div[mindex] <= din[23:0];          // Configure clock dividers. CLKDIV registers
-       IMM  : imm <= 1;                           // Immediate instruction
+       IMM  : imm[mindex] <= 1;                  // Immediate instruction
        SHIFT: begin
-                auto_push[mindex] <= din[16];     // SHIFT_CTRL
+                auto_push[mindex] <= din[16];    // SHIFT_CTRL
                 auto_pull[mindex] <= din[17];
                 in_shift_dir[mindex] <= din[18];
                 out_shift_dir[mindex] <= din[19];
                 isr_threshold[mindex] <= din[24:20];
                 osr_threshold[mindex] <= din[29:25];
               end
-       IPINS: initial_pins[mindex] <= din;        // Configure initial output pin values
-       IDIRS: initial_dirs[mindex] <= din;        // Configure initial pin directions
      endcase
     end
   end
@@ -203,8 +191,8 @@ module pio (
         .in_shift_dir(in_shift_dir[j]),
         .out_shift_dir(out_shift_dir[j]),
         .div(div[j]),
-        .instr(imm ? din[15:0] : instr[pstart[j] + pc[j]]),
-        .imm(imm),
+        .instr(imm[j] ? din[15:0] : instr[pstart[j] + pc[j]]),
+        .imm(imm[j]),
         .pend(pend[j]),
         .wrap_target(wrap_target[j]),
         .pins_out_base(pins_out_base[j]),

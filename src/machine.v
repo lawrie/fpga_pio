@@ -142,7 +142,7 @@ module machine (
       0: bit_op = in;
       1: bit_op = ~in;
       2: bit_op = reverse(in);
-      3: bit_op = in;
+      3: bit_op = in; // Reserved
     endcase
   endfunction
 
