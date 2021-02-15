@@ -13,7 +13,7 @@ module pc (
 
   reg [4:0] index = 0;
 
-  assign dout = index;
+  assign dout = (penable && !stalled) ? (jmp ? din : index == pend ? wrap_target : index + 1) : index;
 
   always @(posedge clk) begin
     if (reset)

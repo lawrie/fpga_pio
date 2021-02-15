@@ -43,7 +43,6 @@ module pio #(
   reg [NUM_MACHINES-1:0]   clkdiv_restart;
 
   // Configuration
-  reg [4:0]   pstart          [0:NUM_MACHINES-1];
   reg [4:0]   pend            [0:NUM_MACHINES-1];
   reg [4:0]   wrap_target     [0:NUM_MACHINES-1];
   reg [23:0]  div             [0:NUM_MACHINES-1];
@@ -59,6 +58,8 @@ module pio #(
   reg [3:0]   status_n        [0:NUM_MACHINES-1];
   reg [4:0]   out_en_sel      [0:NUM_MACHINES-1];  
   reg [4:0]   jmp_pin         [0:NUM_MACHINES-1];
+
+  (* mem2reg *) reg [15:0]  curr_instr      [0:NUM_MACHINES-1];
 
   // Output from machines
   wire [31:0] output_pins    [0:NUM_MACHINES-1];
@@ -78,6 +79,12 @@ module pio #(
   assign gpio_dir = pin_directions[0];
 
   integer i;
+
+  always @(posedge clk) begin
+    for(i=0;i<NUM_MACHINES;i=i+1) begin
+      curr_instr[i] <= instr[pc[i]];
+    end
+  end
 
   // Actions
   localparam NONE  = 0;
@@ -107,7 +114,6 @@ module pio #(
       side_pindir <= 0;
       exec_stalled <= 0;
       for(i=0;i<NUM_MACHINES;i++) begin
-        pstart[i] <= 0;
         pend[i] <= 0;
         wrap_target[i] <= 0;
         div[i] <= 0; // no clock divider
@@ -201,7 +207,7 @@ module pio #(
         .out_shift_dir(out_shift_dir[j]),
         .div(div[j]),
         .use_divider(use_divider[j]),
-        .instr(imm[j] ? din[15:0] : instr[pstart[j] + pc[j]]),
+        .instr(imm[j] ? din[15:0] : curr_instr[j]),
         .imm(imm[j]),
         .pend(pend[j]),
         .wrap_target(wrap_target[j]),

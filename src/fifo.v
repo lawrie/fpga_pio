@@ -10,9 +10,9 @@ module fifo (
   output            full
 );
 
-  reg [31:0] arr [0:3];
+  reg [31:0] arr [0:31]; // Use large value to force use of BRAM
   reg [1:0]  first;
-  reg [1:0]  last;
+  reg [1:0]  next;
   reg [2:0]  count;
 
   wire do_pull = pull && !empty;
@@ -21,12 +21,12 @@ module fifo (
   always @(posedge clk) begin
     if (reset) begin
       first <= 0;
-      last <= 0;
+      next <= 0;
       count <= 0;
     end else begin
       if (do_push) begin
-        last <= last + 1;
-        arr[last] <= din;
+        next <= next + 1;
+        arr[next] <= din;
         if (!do_pull) count <= count + 1;
       end
       if (do_pull) begin
