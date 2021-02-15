@@ -1,0 +1,11 @@
+240006000 // Set wrap
+700000280 // Set divider to get 10MHz frequency
+540000000 // Set side pin group to pin 0
+400000010 // Set period to 16
+000000010 // Maintain din for extra clock cycle
+900008080 // Execute pull
+000008080 // Maintain din
+90000a0c7 // Execute  mov isr, osr
+00000a0c7 // Maintain din
+600000001 // Enable machine 1
+
