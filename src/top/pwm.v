@@ -116,6 +116,7 @@ module top (
 
   // Led and gpio output
   assign led = {2'b11, ~gpio_out[0]};
+  assign gn[3] = gpio_out[0];
 
 endmodule
 
