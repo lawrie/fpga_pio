@@ -12,8 +12,8 @@ module pio (
   output [31:0] gpio_dir,
   output        irq0,
   output        irq1,
-  output [3:0]  full,
-  output [3:0]  empty
+  output [3:0]  tx_full,
+  output [3:0]  rx_empty
 );
 
   // Shared instructions memory
@@ -237,7 +237,7 @@ module pio (
         .din(din),
         .dout(mdin[j]),
         .empty(mempty[j]),
-        .full(full[j])
+        .full(tx_full[j])
       );
 
       fifo fifo_rx (
@@ -248,7 +248,7 @@ module pio (
         .din(mdout[j]),
         .dout(pdout[j]),
         .full(mfull[j]),
-        .empty(empty[j])
+        .empty(rx_empty[j])
       );
     end
   endgenerate

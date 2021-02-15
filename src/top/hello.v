@@ -20,8 +20,8 @@ module top (
   wire [31:0] gpio_dir;   // Pin directions
   wire [31:0] dout;       // Output from PIO
   wire        irq0, irq1; // IRQ flags from PIO
-  wire [3:0]  full;       // Set when TX fifo is full  
-  wire [3:0]  empty;      // Set when RX fifo is empty
+  wire [3:0]  tx_full;    // Set when TX fifo is full  
+  wire [3:0]  rx_empty;   // Set when RX fifo is empty
 
   // Power-on reset
   reg [15:0] pwr_up_reset_counter = 0;
@@ -85,9 +85,9 @@ module top (
              end
            end
         2: begin // Run state
-             if (full[0]) stalled <= stalled + 1;
+             if (tx_full[0]) stalled <= stalled + 1;
              delay_cnt <= delay_cnt + 1;
-             if (delay_cnt == 0 && !full[0]) begin
+             if (delay_cnt == 0 && !tx_full[0]) begin
                action <= 4;  // PUSH
                cp <= cp + 1;
                if (cp == 12) 
@@ -115,8 +115,8 @@ module top (
     .gpio_dir(gpio_dir),
     .irq0(irq0),
     .irq1(irq1),
-    .full(full),
-    .empty(empty)
+    .tx_full(tx_full),
+    .rx_empty(rx_empty)
   );
 
   // Led and gpio outpuy

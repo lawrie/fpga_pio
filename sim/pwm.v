@@ -30,8 +30,8 @@ module tb();
   wire [31:0] gpio_out; 
   wire[31:0]  gpio_dir; 
   wire [31:0] dout;
-  wire [3:0]  full;
-  wire [3:0]  empty;
+  wire [3:0]  tx_full;
+  wire [3:0]  rx_empty;
 
   // Configuration
   reg [15:0] program [0:31];
@@ -141,8 +141,8 @@ module tb();
     .gpio_in(gpio_in),
     .gpio_out(gpio_out),
     .gpio_dir(gpio_dir),
-    .full(full),
-    .empty(empty)
+    .tx_full(tx_full),
+    .rx_empty(rx_empty)
   );
 
 endmodule 
