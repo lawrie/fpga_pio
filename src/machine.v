@@ -7,7 +7,6 @@ module machine (
   input [31:0]  din,
   input [15:0]  instr,
   input [31:0]  input_pins,
-  input [31:0]  gpio_pins,
   input [7:0]   irq_flags_in,
   input         imm,
   input         empty,
@@ -36,15 +35,15 @@ module machine (
 
   // Output
   output [4:0]  pc,
-  output reg    push, // Send data to output FIFO
-  output reg    pull, // Get data from input FIFO
+  output reg    push, // Send data to RX FIFO
+  output reg    pull, // Get data from TX FIFO
   output reg [31:0] dout,
   output reg [31:0] output_pins,
   output reg [31:0] pin_directions,
   output reg [7:0]  irq_flags_out
 );
 
-  // Strobes to implement instructions (cominatorial)
+  // Strobes to implement instructions (combinatorial)
   reg         jmp;
   reg         setx;
   reg         sety;
@@ -60,16 +59,15 @@ module machine (
   reg         set_out_dirs;
   reg         set_side_pins;
   reg         set_side_dirs;
-  reg         set_in_pins;
-  reg         set_in_dirs;
   reg         exec;
-  reg         exec1 = 0;
   reg         waiting;
   reg         auto;
 
+  reg [5:0]   bit_count;
   reg [31:0]  new_val;
+  
+  reg         exec1 = 0;
   reg [15:0]  exec_instr;
-  reg [15:0]  exec1_instr;
  
   // Divided clock enable signal 
   wire        penable;
@@ -115,7 +113,6 @@ module machine (
   wire        in_pin0 = input_pins[0];
 
   reg [4:0]   delay_cnt = 0;
-  reg [5:0]   bit_count;
 
   // States
   wire enabled  = exec1 || imm || (en && penable); // Instruction execution enabled
@@ -170,7 +167,7 @@ module machine (
   );
     begin
       exec = 1;
-      exec_instr = val;
+      new_val = val;
     end
   endtask
 
@@ -242,7 +239,7 @@ module machine (
       delay_cnt <= 0;
     else if (en & penable) begin
       exec1 <= exec; // Do execition on next cycle after exec set
-      exec1_instr <= exec_instr;
+      exec_instr <= new_val;
       if (delaying) delay_cnt <= delay_cnt - 1;
       else if (!waiting && !exec && delay > 0) delay_cnt <= delay;
     end
@@ -293,9 +290,6 @@ module machine (
     set_set_dirs = 0;
     set_out_pins = 0;
     set_out_dirs = 0;
-    set_in_pins = 0;
-    set_in_dirs = 0;
-    exec_instr = 0;
     irq_flags_out = 0;
     dout = 0;
     if (enabled && !delaying) begin
@@ -314,7 +308,7 @@ module machine (
                 endcase
               end
         WAIT: case (source2) // Source
-                0: waiting = gpio_pins[index] != polarity;
+                0: waiting = input_pins[index] != polarity;
                 1: waiting = input_pins[pins_in_base + index] != polarity;
                 2: waiting = irq_flags_out[irq_index] != polarity;
               endcase
@@ -440,7 +434,7 @@ module machine (
 
   // Instruction decoder
   decoder decode (
-    .instr(exec1 ? exec1_instr : instr),
+    .instr(exec1 ? exec_instr : instr),
     .sideset_bits(pins_side_count),
     .sideset_enable_bit(sideset_enable_bit),
     .sideset_enabled(sideset_enabled),
