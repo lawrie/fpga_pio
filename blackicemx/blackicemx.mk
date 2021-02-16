@@ -3,7 +3,7 @@ bin/toplevel.bin : bin/toplevel.asc
 
 bin/toplevel.json : ${VERILOG}
 	mkdir -p bin
-	yosys -q -p "synth_ice40 -abc9 -json bin/toplevel.json" ${VERILOG}
+	yosys -q -f "verilog -Dblackicemx" -p "synth_ice40 -abc9 -json bin/toplevel.json" ${VERILOG}
 
 bin/toplevel.asc : ${PCF_FILE} bin/toplevel.json
 	nextpnr-ice40 --freq 18 --pcf-allow-unconstrained --hx8k --package tq144:4k --json bin/toplevel.json --pcf ${PCF_FILE} --asc bin/toplevel.asc --opt-timing --placer heap

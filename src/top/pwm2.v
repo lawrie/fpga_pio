@@ -136,7 +136,12 @@ module top (
   );
 
   // Led and gpio output
+`ifdef blackicemx
+  assign led = ~gpio_out[1:0];
+`else
   assign led = gpio_out[1:0];
+`endif
+
   assign gn[3] = gpio_out[0];
   assign gn[2] = gpio_out[1];
 

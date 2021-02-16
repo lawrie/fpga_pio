@@ -75,11 +75,14 @@ module pio #(
   wire [NUM_MACHINES-1:0]  mpush;
   wire [NUM_MACHINES-1:0]  mpull;
 
-  assign gpio_out = output_pins[0]; // TODO: Combine outputs from machines
-  assign gpio_dir = pin_directions[0];
+  // TODO Support up to 4 machines and combine pin directions and settings by priority
+  assign gpio_out = output_pins[0] | output_pins[1]; 
+  // TODO Implement inout gpio and pin directions
+  assign gpio_dir = pin_directions[0] | pin_directions[1];
 
   integer i;
 
+  // Synchronous fetch of current instruction for each machine
   always @(posedge clk) begin
     for(i=0;i<NUM_MACHINES;i=i+1) begin
       curr_instr[i] <= instr[pc[i]];
