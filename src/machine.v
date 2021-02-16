@@ -208,6 +208,42 @@ module machine (
     end
   endtask
 
+  task pins_set (
+    input [31:0] val
+  );
+    begin
+      set_set_pins = 1;
+      new_val = val;
+    end
+  endtask
+
+  task dirs_set (
+    input [31:0] val
+  );
+    begin
+      set_set_dirs = 1;
+      new_val = val;
+    end
+  endtask
+
+  task pins_out (
+    input [31:0] val
+  );
+    begin
+      set_out_pins = 1;
+      new_val = val;
+    end
+  endtask
+
+  task dirs_out (
+    input [31:0] val
+  );
+    begin
+      set_out_dirs = 1;
+      new_val = val;
+    end
+  endtask
+
   task do_push();
     begin
       push = 1;
@@ -256,16 +292,16 @@ module machine (
           if (pins_side_count > i) output_pins[pins_side_base+i] <= side_set[i];
       if (set_set_pins)
         for (i=0;i<5;i++) 
-          if (pins_set_count > i) output_pins[pins_set_base+i] <= data[i];
+          if (pins_set_count > i) output_pins[pins_set_base+i] <= new_val[i];
       if (set_set_dirs)
         for (i=0;i<5;i++) 
-          if (pins_set_count > i) pin_directions[pins_set_base+i] <= data[i];
+          if (pins_set_count > i) pin_directions[pins_set_base+i] <= new_val[i];
       if (set_out_pins)
         for (i=0;i<5;i++) 
           if (pins_out_count > i) output_pins[pins_out_base+i] <= new_val[i];
       if (set_out_dirs)
         for (i=0;i<5;i++) 
-          if (pins_out_count > i) pin_directions[pins_out_base+i] <= data[i];
+          if (pins_out_count > i) pin_directions[pins_out_base+i] <= new_val[i];
     end
   end
   
@@ -331,10 +367,10 @@ module machine (
                  waiting = empty;
                  auto = 1;
               end else case (destination) // Destination
-                0: begin do_out_shift = 1; new_val = out_shift; set_out_pins = 1; end                  // PINS
+                0: begin do_out_shift = 1; pins_out(out_shift); end                                    // PINS
                 1: begin do_out_shift = 1; set_x(out_shift); end                                       // X
                 2: begin do_out_shift = 1; set_y(out_shift); end                                       // Y
-                4: begin do_out_shift = 1; new_val = out_shift; set_out_dirs = 1; end                  // PINDIRS
+                4: begin do_out_shift = 1; dirs_out(out_shift); end                                    // PINDIRS
                 5: begin do_out_shift = 1; set_pc(out_shift);          ; end                           // PC
                 6: begin do_out_shift = 1; set_isr(out_shift); bit_count = op2; end                    // ISR
                 7: begin do_out_shift = 1; set_exec(out_shift[15:0]); end                              // EXEC
@@ -360,7 +396,13 @@ module machine (
                 end
               end
         MOV:  case (destination)  // Destination TODO Status source
-                0: begin end // TODO PINS
+                0: case (mov_source) // PINS
+                     1: pins_out(bit_op(in_pins, mov_op));   // x
+                     2: pins_out(bit_op(y, mov_op));         // Y
+                     3: pins_out(bit_op(null, mov_op));      // NULL
+                     6: pins_out(bit_op(in_shift, mov_op));  // ISR
+                     7: pins_out(bit_op(out_shift, mov_op)); // OSR
+                   endcase
                 1: case (mov_source) // X
                      0: set_x(bit_op(in_pins, mov_op));      // PINS
                      2: set_x(bit_op(y, mov_op));            // Y
@@ -409,17 +451,17 @@ module machine (
                    endcase
               endcase
         IRQ:  begin
-                if (op1[1]) irq_flags_out[irq_index] = 0;      // CLEAR
-                else begin                                     // SET
+                if (op1[1]) irq_flags_out[irq_index] = 0;    // CLEAR
+                else begin                                   // SET
                   irq_flags_out[irq_index] = 1;
                   waiting = blocking && irq_flags_in[irq_index] != 0; // If wait set, wait for irq cleared
                 end
               end
         SET:  case (destination) // Destination
-                0: set_set_pins = 1;                           // PINS
-                1: set_x({27'b0, data});                       // X
-                2: set_y({27'b0, data});                       // Y
-                4: set_set_dirs = 1;                           // PINDIRS
+                0: pins_set(data);                           // PINS
+                1: set_x({27'b0, data});                     // X
+                2: set_y({27'b0, data});                     // Y
+                4: dirs_set(data);                           // PINDIRS
               endcase
       endcase
     end
