@@ -39,7 +39,7 @@ module tb();
 
   wire [5:0]  plen = 4;                 // Program length
   wire [23:0] div = 24'h0100;           // Clock divider
-  wire [31:0] pin_grps = 32'h00040000;  // OUT GRP 4 pins
+  wire [31:0] pin_grps = 32'h00400000;  // OUT GRP 4 pins
   wire [31:0] exec_ctrl = 32'h00003000; // Wrap top
 
   integer i;
@@ -103,8 +103,8 @@ module tb();
     repeat(2) @(posedge clk);
     action = 0;
 
-    // Send a MOV OSR Y
-    act(IMM, 16'b101_00000_010_00111);
+    // Send a MOV OSR ISR
+    act(IMM, 16'b101_00000_110_00111);
     repeat(2) @(posedge clk);
     action = 0;
 

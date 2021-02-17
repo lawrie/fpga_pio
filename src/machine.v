@@ -111,6 +111,8 @@ module machine (
   wire        pin0 = output_pins[0];
   wire        pin1 = output_pins[1];
   wire        pin2 = output_pins[2];
+  wire        pin3 = output_pins[3];
+
   wire        in_pin0 = input_pins[0];
 
   reg [4:0]   delay_cnt = 0;

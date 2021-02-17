@@ -1,5 +1,5 @@
 .program stepper
-    mov osr y
+    mov osr isr
     set x 8
 loop:
     out pins 4
