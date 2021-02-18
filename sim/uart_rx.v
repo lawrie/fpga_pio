@@ -36,11 +36,11 @@ module tb();
   // Configuration
   // uart program
   reg [15:0] program [0:31];
-  initial $readmemh("test.mem", program);
+  initial $readmemh("uart_rx.mem", program);
 
-  wire [5:0]  plen = 4;                // Program length 4
-  wire [23:0] div = 24'h0 ;            // Clock divider 0
-  wire [31:0] pin_grps = 32'h20100000; // OUT and SIDE groups both GPIO 0
+  wire [5:0]  plen = 4;                 // Program length 4
+  wire [23:0] div = 24'h0 ;             // Clock divider 0
+  wire [31:0] pin_grps = 32'h00000000;  // IN pin 0 
   wire [31:0] exec_ctrl = 32'h00003000; // Wrap top
 
   integer i;
@@ -95,7 +95,7 @@ module tb();
     act(GRPS, pin_grps);
 
     // isr threshold and autopush
-    act(SHIFT, 32'h00000000);
+    act(SHIFT, 32'h00810000);
 
     // Set input pin high
     gpio_in[0] = 1;
