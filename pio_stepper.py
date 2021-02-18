@@ -7,7 +7,7 @@ def stepper():
     pull()
     mov(isr, osr)
     pull()
-    mov(y, isr)
+    mov(y, osr)
     label("outer")
     mov(osr, isr)
     set(x, 6)
