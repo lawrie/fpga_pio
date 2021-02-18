@@ -37,10 +37,10 @@ module tb();
   reg [15:0] program [0:31];
   initial $readmemh("stepper.mem", program);
 
-  wire [5:0]  plen = 4;                 // Program length
+  wire [5:0]  plen = 5;                 // Program length
   wire [23:0] div = 24'h0100;           // Clock divider
   wire [31:0] pin_grps = 32'h00400000;  // OUT GRP 4 pins
-  wire [31:0] exec_ctrl = 32'h00003000; // Wrap top
+  wire [31:0] exec_ctrl = 32'h00004000; // Wrap top
 
   integer i;
 
