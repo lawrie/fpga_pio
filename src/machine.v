@@ -417,7 +417,7 @@ module machine (
                      1: set_y(bit_op(x, mov_op));            // X
                      3: set_y(bit_op(null, mov_op));         // NULL
                      6: set_y(bit_op(in_shift, mov_op));     // ISR
-                     6: set_y(bit_op(out_shift, mov_op));    // OSR
+                     7: set_y(bit_op(out_shift, mov_op));    // OSR
                    endcase
                 4: case (mov_source) // EXEC
                      0: set_exec(bit_op(in_pins, mov_op));   // PINS
