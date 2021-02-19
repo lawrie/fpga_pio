@@ -12,7 +12,7 @@ def stepper():
     mov(osr, isr)
     set(x, 6)
     label("inner")
-    out(pins, 4) [1]
+    out(pins, 4) [2]
     jmp(x_dec, "inner")
     out(pins, 4)
     jmp(y_dec, "outer")
