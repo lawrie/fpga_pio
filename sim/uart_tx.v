@@ -33,6 +33,8 @@ module tb();
   wire [3:0]  tx_full;
   wire [3:0]  rx_empty;
 
+  wire [4:0] offset = 4;
+
   // Configuration
   reg [15:0] program [0:31];
   initial $readmemh("uart_tx.mem", program);
@@ -79,13 +81,13 @@ module tb();
 
     // Set the instructions
     for(i=0;i<plen;i++) begin
-      index = i;
-      act(INSTR, program[i]);
+      index = offset + i;
+      act(INSTR, program[i][15:13] == 0 ? program[i] + offset : program[i]);
     end
 
     // Set wrap for machine 1
     mindex = 0;
-    act(PEND, exec_ctrl);
+    act(PEND, exec_ctrl + (offset << 12) + (offset << 7)); // Adjust wrap and wrap_target
 
     // Set fractional clock divider
     act(DIV, div);
@@ -96,6 +98,11 @@ module tb();
     // Configure shift out direction
     act(SHIFT, 32'h00080000);
 
+    // If offset is not zero, set PC to offset
+    if (offset > 0) begin
+      act(IMM, offset);
+    end
+
     // Enable machine 1
     act(EN, 1);
 
@@ -104,6 +111,8 @@ module tb();
     
     // Small gap
     repeat(2) @(posedge clk);
+
+    // Send data
     for(i=0;i<10;i++) begin
       // Send numeric character
       act(PUSH, 32'h30 + i);
