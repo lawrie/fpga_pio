@@ -4,7 +4,11 @@
 
 This is an attempt to recreate the Raspberry Pi RP2040 PIO interface in Verilog.
 
-It is currently incomplete, but some programs run in simulation and on open source FPGA boards.
+PIO stands for Progammable I/O, and it is a peripheral that is part of the RP2040 SoC, which is much more flexible than hardware implementations of specific protocols like SPI, I2C, UART etc. It can implement all these protocols and more at high speed and on any GPIO pins.
+
+It runs in up to 8 special processors, known as State Machines, which are programmed in assembler using a machine language designed specifically for fast cycle-accurate I/O. These processors run independently of the main CPUs.
+
+This implementation has been done from the specification, without access to any Raspberry Pi HDL. It is currently incomplete, but some programs run in simulation and on open source FPGA boards.
 
 The current supported boards are the Blackice MX and the Ulx3s.
 
