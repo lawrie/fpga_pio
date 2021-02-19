@@ -143,4 +143,33 @@ do_zero:
 
 ![ws2812 example](https://raw.githubusercontent.com/lawrie/lawrie.github.io/master/images/ws2812.jpg)
 
+### Stepper motor
 
+This example shows driving a stepper motor with PIO. 
+
+You set the direction by pushing the required phase patterns as a set of 8 4-bit values, and then you push the required number of half steps.
+
+To start again with a new set of steps, you execute an immediate jump to the start of the program.
+
+```
+.program stepper
+    pull block
+    mov isr osr
+    pull block
+    mov y osr
+outer:
+    mov osr isr 
+    set x 6
+inner:
+    out pins 4 [2]
+    jmp x-- inner
+    out pins 4
+    jmp y-- outer
+wrap_target:
+    out pins 4
+    jmp wrap_target
+```
+
+Here is is driving a stepper motor from a Blackice MX:
+
+![blackice mx stepper](https://github.com/lawrie/lawrie.github.io/blob/master/images/stepper_mx.jpg)
