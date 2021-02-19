@@ -23,6 +23,8 @@ module top (
   wire [3:0]  tx_full;    // Set when TX fifo is full  
   wire [3:0]  rx_empty;   // Set when RX fifo is empty
 
+  wire [4:0]  offset = 4;
+
   // Power-on reset
   reg [15:0] pwr_up_reset_counter = 0;
   wire       pwr_up_reset_n = &pwr_up_reset_counter;
@@ -39,7 +41,7 @@ module top (
   initial $readmemh("uart_tx.mem", program);
 
   reg [35:0] conf [0:31];
-  wire [5:0] clen = 5; // Config length
+  wire [5:0] clen = 6; // Config length
   initial $readmemh("tx_conf.mem", conf);
 
   // State machine to send program to PIO and configure PIO state machines
@@ -66,9 +68,10 @@ module top (
       case (state)
         0: begin // Send program to pio
              action <= 1;
-             din <= program[pindex];
+             // Add offset to jumps
+             din <= program[pindex][15:13] == 0 ? program[pindex] + offset : program[pindex];
              pindex <= pindex + 1;
-             index <= pindex;
+             index <= pindex + offset;
              if (pindex == 31)
                state <= 1;
            end
