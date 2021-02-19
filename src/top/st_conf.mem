@@ -1,0 +1,6 @@
+20000A500 // Set wrap 11 and wrap_target 10
+7003FFF00 // Set divider 16K
+500400000 // Set OUT count to 4
+A00000000 // Shift control, shift left
+600000001 // Enable machine 1
+
