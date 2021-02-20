@@ -11,4 +11,6 @@ set_io gn[2] 22
 set_io gn[3] 21
 
 set_io tx 62
+set_io rx 61
+
 

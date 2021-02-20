@@ -1,0 +1,7 @@
+240007200 // Set wrap, wrap_target and sideset enable bit
+700001b00 // Set divider 27
+540100000 // Set pin groups side and out, sideset enable bit
+A00080000 // Shift control, shift out right
+900000004 // Jump to 4
+600000003 // Enable machine 1 and 2
+

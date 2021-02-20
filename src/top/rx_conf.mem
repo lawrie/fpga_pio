@@ -1,0 +1,6 @@
+200003000 // Set wrap
+700001b00 // Set divider 27
+A00850000 // Autopush and threshold 8, shift right
+500000000 // IN pin 0
+600000001 // Enable machine 1
+
