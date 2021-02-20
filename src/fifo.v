@@ -7,10 +7,11 @@ module fifo (
   input [31:0]      din,
   output [31:0]     dout,
   output            empty,
-  output            full
+  output            full,
+  output [2:0]      level
 );
 
-  reg [31:0] arr [0:31]; // Use large value to force use of BRAM
+  reg [31:0] arr [0:3];
   reg [1:0]  first;
   reg [1:0]  next;
   reg [2:0]  count;
@@ -39,6 +40,7 @@ module fifo (
   assign empty = count == 0;
   assign full = count == 4;
   assign dout = arr[first];
+  assign level = count;
 
 endmodule
 

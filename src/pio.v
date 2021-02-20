@@ -61,7 +61,7 @@ module pio #(
 
   (* mem2reg *) reg [15:0]  curr_instr      [0:NUM_MACHINES-1];
 
-  // Output from machines
+  // Output from machines and fifos
   wire [31:0] output_pins    [0:NUM_MACHINES-1];
   wire [31:0] pin_directions [0:NUM_MACHINES-1];
   wire [4:0]  pc             [0:NUM_MACHINES-1];
@@ -69,6 +69,8 @@ module pio #(
   wire [31:0] mdout          [0:NUM_MACHINES-1];
   wire [31:0] pdout          [0:NUM_MACHINES-1];
   wire [7:0]  irq_flags_out  [0:NUM_MACHINES-1];
+  wire [2:0]  rx_level       [0:NUM_MACHINES-1];
+  wire [2:0]  tx_level       [0:NUM_MACHINES-1];
 
   wire [NUM_MACHINES-1:0]  mempty;
   wire [NUM_MACHINES-1:0]  mfull;
@@ -244,7 +246,8 @@ module pio #(
         .din(din),
         .dout(mdin[j]),
         .empty(mempty[j]),
-        .full(tx_full[j])
+        .full(tx_full[j]),
+        .level(tx_level[j])
       );
 
       fifo fifo_rx (
@@ -255,7 +258,8 @@ module pio #(
         .din(mdout[j]),
         .dout(pdout[j]),
         .full(mfull[j]),
-        .empty(rx_empty[j])
+        .empty(rx_empty[j]),
+        .level(rx_level[j])
       );
     end
   endgenerate
