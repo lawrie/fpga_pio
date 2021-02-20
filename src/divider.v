@@ -4,7 +4,8 @@ module divider (
   input         reset,
   input [23:0]  div,
   input         use_divider,
-  output        penable
+  output        penable,
+  output        pclk
 );
 
   reg [23:0] div_counter;
@@ -28,6 +29,7 @@ module divider (
   end
 
   assign penable = pen & ~old_pen;
+  assign pclk = pen;
 
 endmodule
 

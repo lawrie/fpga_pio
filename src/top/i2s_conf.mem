@@ -1,0 +1,6 @@
+200009000 // Set wrap
+700000237 // Set divider
+540100400 // OUT pin 0 and sideset pins 1 and 2
+A00000000 // Shift control
+600000001 // Enable machine 1
+

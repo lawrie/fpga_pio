@@ -15,7 +15,8 @@ module pio #(
   output            irq0,
   output            irq1,
   output [3:0]      tx_full,
-  output [3:0]      rx_empty
+  output [3:0]      rx_empty,
+  output [3:0]      pclk
 );
 
   // Shared instructions memory
@@ -234,6 +235,7 @@ module pio #(
         .dout(mdout[j]),
         .pull(mpull[j]),
         .push(mpush[j]),
+        .pclk(pclk[j]),
         .empty(mempty[j]),
         .full(mfull[j])
       );

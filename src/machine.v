@@ -41,7 +41,8 @@ module machine (
   output reg [31:0] dout,
   output reg [31:0] output_pins,
   output reg [31:0] pin_directions,
-  output reg [7:0]  irq_flags_out
+  output reg [7:0]  irq_flags_out,
+  output        pclk
 );
 
   // Strobes to implement instructions (combinatorial)
@@ -475,7 +476,8 @@ module machine (
     .reset(reset | restart),
     .div(div),
     .use_divider(use_divider),
-    .penable(penable)
+    .penable(penable),
+    .pclk(pclk)
   );
 
   // Instruction decoder
