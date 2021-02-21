@@ -177,3 +177,24 @@ wrap_target:
 Here is is driving a stepper motor from a Blackice MX:
 
 ![blackice mx stepper](https://github.com/lawrie/lawrie.github.io/blob/master/images/stepper_mx.jpg)
+
+### I2S
+
+```
+.program i2s
+.side_set 2
+    pull noblock  side 3
+    mov x osr     side 3
+    set y 14      side 3 [1]
+loop1:
+    out pins 1    side 2 [3]
+    jmp y-- loop1 side 3 [3]
+    out pins 1    side 0 [3]
+    set y 14      side 1 [3]
+loop0:
+    out pins 1    side 0 [3]
+    jmp y-- loop0 side 1 [3]
+    out pins 1    side 2 [3]
+```
+
+The I2S example (top/i2s.v) plays a wave file in 16-bit 44100Hz stereo, from BRAM to a Digilent I2S Pmod. It works better on the Ulx3s board, which has more BRAM.
