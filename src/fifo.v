@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2022 Lawrie Griffiths
+// SPDX-License-Identifier: BSD-2-Clause
+
 `default_nettype none
 module fifo (
   input             clk,
@@ -43,4 +46,3 @@ module fifo (
   assign level = count;
 
 endmodule
-

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2022 Lawrie Griffiths
+// SPDX-License-Identifier: BSD-2-Clause
+
 `default_nettype none
 module divider (
   input         clk,
@@ -32,4 +35,3 @@ module divider (
   assign pclk = pen;
 
 endmodule
-
