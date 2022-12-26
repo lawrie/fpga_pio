@@ -278,9 +278,11 @@ module machine (
 
   // Count down if delay
   always @(posedge clk) begin
-    if (reset || restart) 
+    if (reset || restart) begin
       delay_cnt <= 0;
-    else if (en & penable) begin
+      pin_directions <= 32'h00000000;
+      output_pins <= 32'h00000000;
+    end else if (en & penable) begin
       exec1 <= exec; // Do execition on next cycle after exec set
       exec_instr <= new_val;
       if (delaying) delay_cnt <= delay_cnt - 1;
