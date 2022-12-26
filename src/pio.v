@@ -207,6 +207,7 @@ module pio #(
                  isr_threshold[mindex] <= din[24:20];
                  osr_threshold[mindex] <= din[29:25];
                end
+        NONE  : dout <= 32'h01000000; // Hardware version number
       endcase
     end
   end
