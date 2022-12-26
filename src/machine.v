@@ -290,9 +290,8 @@ module machine (
  
   integer i;
 
-  // Set output pins and pin directions TODO Move this to PIO and merge output values from machines
   always @(posedge clk) begin
-    if (enabled && !delaying) begin // TODO Set mask to allow multiplex of results from multiple machines
+    if (enabled && !delaying) begin
       if (sideset_enabled && !(auto && !waiting)) // TODO Is auto test correct?
         for (i=0;i<5;i++) 
           if (pins_side_count > i) output_pins[pins_side_base+i] <= side_set[i];
@@ -566,4 +565,3 @@ module machine (
   );
 
 endmodule
-
