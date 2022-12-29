@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2022 Lawrie Griffiths
+// SPDX-License-Identifier: BSD-2-Clause
+
 `default_nettype none
 module machine (
   input         clk,
@@ -275,9 +278,11 @@ module machine (
 
   // Count down if delay
   always @(posedge clk) begin
-    if (reset || restart) 
+    if (reset || restart) begin
       delay_cnt <= 0;
-    else if (en & penable) begin
+      pin_directions <= 32'h00000000;
+      output_pins <= 32'h00000000;
+    end else if (en & penable) begin
       exec1 <= exec; // Do execition on next cycle after exec set
       exec_instr <= new_val;
       if (delaying) delay_cnt <= delay_cnt - 1;
@@ -287,9 +292,8 @@ module machine (
  
   integer i;
 
-  // Set output pins and pin directions TODO Move this to PIO and merge output values from machines
   always @(posedge clk) begin
-    if (enabled && !delaying) begin // TODO Set mask to allow multiplex of results from multiple machines
+    if (enabled && !delaying) begin
       if (sideset_enabled && !(auto && !waiting)) // TODO Is auto test correct?
         for (i=0;i<5;i++) 
           if (pins_side_count > i) output_pins[pins_side_base+i] <= side_set[i];
@@ -563,4 +567,3 @@ module machine (
   );
 
 endmodule
-

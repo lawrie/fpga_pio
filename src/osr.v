@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2022 Lawrie Griffiths
+// SPDX-License-Identifier: BSD-2-Clause
+
 `default_nettype none
 module osr (
   input         clk,
@@ -45,4 +48,3 @@ module osr (
   assign shift_count = count;
 
 endmodule
-
