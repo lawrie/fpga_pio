@@ -42,7 +42,7 @@ module isr (
   end
 
   assign dout = shift_reg;
-  assign shift_count = count;
+  assign shift_count = (shift == 0) ? 32 : count;
 
 endmodule
  

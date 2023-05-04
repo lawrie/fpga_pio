@@ -45,6 +45,6 @@ module osr (
 
   // The output value is the amount shifted out if do_shift ia active otherwise the current shift register
   assign dout = do_shift ? shift_out : shift_reg;
-  assign shift_count = count;
+  assign shift_count = (shift == 0) ? 32 : count;
 
 endmodule
