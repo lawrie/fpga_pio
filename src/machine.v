@@ -404,7 +404,7 @@ module machine (
               end
         MOV:  case (destination)  // Destination TODO Status source
                 0: case (mov_source) // PINS
-                     1: pins_out(bit_op(in_pins, mov_op));   // x
+                     1: pins_out(bit_op(x, mov_op));         // X
                      2: pins_out(bit_op(y, mov_op));         // Y
                      3: pins_out(bit_op(null, mov_op));      // NULL
                      6: pins_out(bit_op(in_shift, mov_op));  // ISR
