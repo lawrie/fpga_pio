@@ -122,7 +122,7 @@ module machine (
   reg [4:0]   delay_cnt = 0;
 
   // States
-  wire enabled  = exec1 || imm || (en && penable); // Instruction execution enabled
+  wire enabled  = (exec1 && penable) || imm || (en && penable); // Instruction execution enabled
   wire delaying = delay_cnt > 0;
 
   // Function to reverse the order of bits in a word
